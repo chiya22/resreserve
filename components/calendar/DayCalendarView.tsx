@@ -182,7 +182,6 @@ export function DayCalendarView({
   const isTitleToday = isSameLocalDay(daySelected, now);
   const dayKey = localDateKey(daySelected);
   const isClosedDay = closedDayByDate.has(dayKey);
-  const closedDayNote = closedDayByDate.get(dayKey);
   const y = daySelected.getFullYear();
   const mo = daySelected.getMonth() + 1;
   const wd = weekdayLabelJa(daySelected);

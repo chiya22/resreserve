@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { getCurrentStaff } from "@/lib/data/auth";
-import { listClosedDaysInRange } from "@/lib/data/closed-days";
+import { listClosedDaysAll } from "@/lib/data/closed-days";
 import { listReservationCategories } from "@/lib/data/reservation-categories";
 import { getReservationsByDateRange } from "@/lib/data/reservations";
 import { listTables } from "@/lib/data/tables";
@@ -63,7 +63,7 @@ export default async function CalendarPage({
     getReservationsByDateRange(rangeStart, rangeEnd),
     listTables(),
     listReservationCategories(),
-    listClosedDaysInRange(rangeStart, rangeEnd),
+    listClosedDaysAll(),
   ]);
 
   const dateKey = safeBase.toISOString();

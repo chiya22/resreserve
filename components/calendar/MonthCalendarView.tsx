@@ -206,7 +206,6 @@ export function MonthCalendarView({
                 const isToday = isSameLocalDay(date, now);
                 const dayKey = localDateKey(date);
                 const isClosedDay = closedDayByDate.has(dayKey);
-                const closedDayNote = closedDayByDate.get(dayKey);
                 const sunCol = colIdx === 0;
                 const satCol = colIdx === 6;
                 let cellBg = "bg-bg-primary";

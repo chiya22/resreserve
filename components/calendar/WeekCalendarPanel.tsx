@@ -274,7 +274,6 @@ export function WeekCalendarPanel({
                 const layouts = blocksByDayIndex[colIdx] ?? [];
                 const byLane = groupByLane(layouts);
                 const dayKey = localDateKey(d);
-                const closedNote = closedDayByDate.get(dayKey);
                 const isClosedDay = closedDayByDate.has(dayKey);
                 return (
                   <div
