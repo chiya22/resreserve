@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
   CategoryFilterControl,
@@ -47,6 +47,7 @@ export type MonthCalendarViewProps = {
   reservations: Reservation[];
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  onJumpMonth: (value: string) => void;
   onOpenHeaderNew: () => void;
   onToday: () => void;
   onSelectViewDay: () => void;
@@ -81,6 +82,7 @@ export function MonthCalendarView({
   reservations,
   onPrevMonth,
   onNextMonth,
+  onJumpMonth,
   onOpenHeaderNew,
   onToday,
   onSelectViewDay,
@@ -91,6 +93,7 @@ export function MonthCalendarView({
   onSlotClick,
   onReservationClick,
 }: MonthCalendarViewProps) {
+  const monthPickerRef = useRef<HTMLInputElement | null>(null);
   const weeks = useMemo(() => buildMonthWeeks(monthAnchor), [monthAnchor]);
 
   const weekLayouts = useMemo(
@@ -103,6 +106,22 @@ export function MonthCalendarView({
       }),
     [weeks, reservations],
   );
+  const monthInputValue = useMemo(() => {
+    const y = monthAnchor.getFullYear();
+    const m = String(monthAnchor.getMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
+  }, [monthAnchor]);
+
+  const openMonthPicker = () => {
+    const input = monthPickerRef.current;
+    if (!input) return;
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === "function") {
+      pickerInput.showPicker();
+      return;
+    }
+    input.click();
+  };
 
   return (
     <div className={calPageShell}>
@@ -116,9 +135,14 @@ export function MonthCalendarView({
           >
             ◀
           </button>
-          <span className="min-w-[7.5rem] text-center text-[17px] font-medium leading-none text-text-primary">
+          <button
+            type="button"
+            onClick={openMonthPicker}
+            className="min-h-11 min-w-[7.5rem] rounded-md px-2 text-center text-[17px] font-medium leading-none text-text-primary hover:bg-bg-hover"
+            aria-label="年月を選択"
+          >
             {monthTitle(monthAnchor)}
-          </span>
+          </button>
           <button
             type="button"
             onClick={onNextMonth}
@@ -127,6 +151,15 @@ export function MonthCalendarView({
           >
             ▶
           </button>
+          <input
+            ref={monthPickerRef}
+            type="month"
+            value={monthInputValue}
+            onChange={(e) => onJumpMonth(e.target.value)}
+            className="sr-only"
+            aria-hidden
+            tabIndex={-1}
+          />
           <button type="button" onClick={onToday} className={calTouchOutlineSm}>
             今日
           </button>

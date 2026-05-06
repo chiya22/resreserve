@@ -276,6 +276,14 @@ export function CalendarView({
       new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1),
       "month",
     );
+  const jumpMonth = (value: string) => {
+    const [yText, mText] = value.split("-");
+    const y = Number(yText);
+    const m = Number(mText);
+    if (!Number.isFinite(y) || !Number.isFinite(m)) return;
+    if (m < 1 || m > 12) return;
+    pushCalendar(new Date(y, m - 1, 1), "month");
+  };
 
   return (
     <>
@@ -352,6 +360,7 @@ export function CalendarView({
           reservations={filteredReservations}
           onPrevMonth={goPrevMonth}
           onNextMonth={goNextMonth}
+          onJumpMonth={jumpMonth}
           onOpenHeaderNew={openHeaderNew}
           onToday={() => pushCalendar(startOfLocalDay(new Date()), "month")}
           onSelectViewDay={onSelectViewDay}
