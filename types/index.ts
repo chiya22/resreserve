@@ -8,6 +8,7 @@ export type Notification =
   Database["public"]["Tables"]["notifications"]["Row"];
 export type ReservationCategoryRow =
   Database["public"]["Tables"]["reservation_categories"]["Row"];
+export type ClosedDay = Database["public"]["Tables"]["closed_days"]["Row"];
 
 // Insert 用の型
 export type StaffInsert = Database["public"]["Tables"]["staff"]["Insert"];

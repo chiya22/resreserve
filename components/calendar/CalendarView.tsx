@@ -34,6 +34,7 @@ import {
   startOfWeekSunday,
 } from "@/lib/calendar/week";
 import type {
+  ClosedDay,
   ReservationCategoryRow,
   ReservationWithTable,
   Table,
@@ -47,6 +48,7 @@ export type CalendarViewProps = {
   staffName: string;
   staffIsOwner: boolean;
   categoryRows: ReservationCategoryRow[];
+  initialClosedDays: ClosedDay[];
 };
 
 function endOfBusinessDay(d: Date): Date {
@@ -75,6 +77,7 @@ export function CalendarView({
   staffName,
   staffIsOwner,
   categoryRows,
+  initialClosedDays,
 }: CalendarViewProps) {
   const router = useRouter();
 
@@ -187,6 +190,13 @@ export function CalendarView({
       }),
     [weekStartSunday],
   );
+  const closedDayByDate = useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const row of initialClosedDays) {
+      map.set(row.closed_on, row.note ?? null);
+    }
+    return map;
+  }, [initialClosedDays]);
 
   const monthLabel = useMemo(
     () => formatMonthRange(weekStartSunday),
@@ -292,6 +302,7 @@ export function CalendarView({
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}
           onDayHeaderClick={onDayHeaderClick}
+          closedDayByDate={closedDayByDate}
           onSlotClick={(d, y) =>
             openSlotNewInternal(d, y, WEEK_PX_PER_HOUR)
           }
@@ -321,6 +332,7 @@ export function CalendarView({
           onSelectViewDay={onSelectViewDay}
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}
+          closedDayByDate={closedDayByDate}
           onSlotClick={(y) =>
             openSlotNewInternal(daySelected, y, DAY_PX_PER_HOUR)
           }
@@ -345,6 +357,7 @@ export function CalendarView({
           onSelectViewDay={onSelectViewDay}
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}
+          closedDayByDate={closedDayByDate}
           onPickDay={onPickDayFromMonth}
           onSlotClick={openMonthEmptyCellNew}
           onReservationClick={handleReservationClick}

@@ -21,6 +21,12 @@ export function CalendarToolbarEnd({
       {staffIsOwner ? (
         <>
           <Link
+            href="/settings/closed-days"
+            className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-md border border-border px-4 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
+          >
+            休業日
+          </Link>
+          <Link
             href="/settings/categories"
             className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-md border border-border px-4 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
           >

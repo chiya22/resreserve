@@ -19,7 +19,7 @@ import { formatHmRange } from "@/lib/calendar/datetime-ui";
 import { RESERVATION_BLOCK_CLASS } from "@/lib/calendar/reservation-palette-classes";
 import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
-import { isSameLocalDay, weekdayLabelJa } from "@/lib/calendar/week";
+import { isSameLocalDay, localDateKey, weekdayLabelJa } from "@/lib/calendar/week";
 
 function groupByLane(layouts: DayOverlapLayout[]): DayOverlapLayout[][] {
   if (layouts.length === 0) return [[]];
@@ -106,6 +106,7 @@ export type WeekCalendarPanelProps = {
   onSelectViewWeek: () => void;
   onSelectViewMonth: () => void;
   onDayHeaderClick: (d: Date) => void;
+  closedDayByDate: Map<string, string | null>;
   onSlotClick: (day: Date, offsetY: number) => void;
   onReservationClick: (r: Reservation) => void;
 };
@@ -131,6 +132,7 @@ export function WeekCalendarPanel({
   onSelectViewWeek,
   onSelectViewMonth,
   onDayHeaderClick,
+  closedDayByDate,
   onSlotClick,
   onReservationClick,
 }: WeekCalendarPanelProps) {
@@ -218,6 +220,8 @@ export function WeekCalendarPanel({
             <div className="grid min-w-0 flex-1 grid-cols-7">
               {weekDays.map((d) => {
                 const isToday = isSameLocalDay(d, now);
+                const dayKey = localDateKey(d);
+                const isClosedDay = closedDayByDate.has(dayKey);
                 return (
                   <button
                     key={d.toISOString()}
@@ -228,15 +232,22 @@ export function WeekCalendarPanel({
                     <span className="text-[11px] leading-none text-text-tertiary">
                       {weekdayLabelJa(d)}
                     </span>
-                    {isToday ? (
-                      <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full bg-accent text-xs font-medium leading-none text-white">
-                        {d.getDate()}
-                      </span>
-                    ) : (
-                      <span className="flex min-h-9 min-w-9 items-center justify-center text-xs font-medium leading-none text-text-primary">
-                        {d.getDate()}
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1">
+                      {isToday ? (
+                        <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full bg-accent text-xs font-medium leading-none text-white">
+                          {d.getDate()}
+                        </span>
+                      ) : (
+                        <span className="flex min-h-9 min-w-9 items-center justify-center text-xs font-medium leading-none text-text-primary">
+                          {d.getDate()}
+                        </span>
+                      )}
+                      {isClosedDay ? (
+                        <span className="text-[10px] font-medium leading-none text-reservation-waitlist-text">
+                          休業日
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                 );
               })}
@@ -262,6 +273,9 @@ export function WeekCalendarPanel({
               {weekDays.map((d, colIdx) => {
                 const layouts = blocksByDayIndex[colIdx] ?? [];
                 const byLane = groupByLane(layouts);
+                const dayKey = localDateKey(d);
+                const closedNote = closedDayByDate.get(dayKey);
+                const isClosedDay = closedDayByDate.has(dayKey);
                 return (
                   <div
                     key={`${weekStartSunday.toISOString()}-${colIdx}`}
@@ -286,10 +300,14 @@ export function WeekCalendarPanel({
                       aria-label="空きスロットから予約を作成"
                       className="absolute inset-0 z-[1] cursor-default touch-manipulation border-0 bg-transparent p-0 outline-none"
                       onClick={(e) => {
+                        if (isClosedDay) return;
                         e.stopPropagation();
                         onSlotClick(d, e.nativeEvent.offsetY);
                       }}
                     />
+                    {isClosedDay ? (
+                      <div className="pointer-events-none absolute inset-0 z-[2] bg-reservation-waitlist-bg/35" />
+                    ) : null}
                     <div className="pointer-events-none absolute inset-0 z-[5] flex">
                       {byLane.map((col, laneIdx) => (
                         <div

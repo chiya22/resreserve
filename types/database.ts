@@ -15,6 +15,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      closed_days: {
+        Row: {
+          closed_on: string
+          created_at: string
+          id: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          closed_on: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          closed_on?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           channel: Database["public"]["Enums"]["notification_channel"]

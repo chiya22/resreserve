@@ -24,6 +24,12 @@ export default async function SettingsStaffPage() {
         <h1 className="text-[17px] font-medium text-text-primary">スタッフアカウント</h1>
         <div className="flex flex-wrap items-center gap-2">
           <Link
+            href="/settings/closed-days"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary transition-colors hover:bg-bg-hover"
+          >
+            休業日設定
+          </Link>
+          <Link
             href="/settings/categories"
             className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary transition-colors hover:bg-bg-hover"
           >

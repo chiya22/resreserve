@@ -23,7 +23,7 @@ import {
   isMultiDayReservation,
 } from "@/lib/calendar/month-span-layout";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
-import { isSameLocalDay } from "@/lib/calendar/week";
+import { isSameLocalDay, localDateKey } from "@/lib/calendar/week";
 
 const WEEK_HEADER = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
@@ -52,6 +52,7 @@ export type MonthCalendarViewProps = {
   onSelectViewDay: () => void;
   onSelectViewWeek: () => void;
   onSelectViewMonth: () => void;
+  closedDayByDate: Map<string, string | null>;
   onPickDay: (d: Date) => void;
   /** セル内の空き領域クリック時: その日付で新規予約モーダルを開く */
   onSlotClick: (d: Date) => void;
@@ -85,6 +86,7 @@ export function MonthCalendarView({
   onSelectViewDay,
   onSelectViewWeek,
   onSelectViewMonth,
+  closedDayByDate,
   onPickDay,
   onSlotClick,
   onReservationClick,
@@ -202,12 +204,16 @@ export function MonthCalendarView({
               {row.map((date, colIdx) => {
                 const inMonth = isInMonth(date, monthAnchor);
                 const isToday = isSameLocalDay(date, now);
+                const dayKey = localDateKey(date);
+                const isClosedDay = closedDayByDate.has(dayKey);
+                const closedDayNote = closedDayByDate.get(dayKey);
                 const sunCol = colIdx === 0;
                 const satCol = colIdx === 6;
                 let cellBg = "bg-bg-primary";
                 if (!inMonth) cellBg = "bg-bg-surface";
                 else if (sunCol) cellBg = "bg-[#FFF5F5]";
                 else if (satCol) cellBg = "bg-[#F0F9FF]";
+                if (isClosedDay) cellBg = "bg-reservation-waitlist-bg/30";
 
                 const singles = reservations
                   .filter((r) => singleDayOnCell(r, date))
@@ -219,7 +225,10 @@ export function MonthCalendarView({
                   <div
                     key={date.toISOString()}
                     className={`relative box-border flex min-h-[124px] flex-col overflow-hidden border-b-[0.5px] border-r-[0.5px] border-border px-1 pb-1 pt-[5px] md:min-h-[136px] ${cellBg}`}
-                    onClick={() => onSlotClick(date)}
+                    onClick={() => {
+                      if (isClosedDay) return;
+                      onSlotClick(date);
+                    }}
                   >
                     <div className="flex shrink-0 items-start justify-start">
                       <button
@@ -231,16 +240,23 @@ export function MonthCalendarView({
                         }}
                         className="cursor-pointer touch-manipulation border-0 bg-transparent p-0 text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-0"
                       >
-                        <span
-                          className={`flex min-h-9 min-w-9 items-center justify-center text-[13px] leading-none ${
-                            isToday
-                              ? "rounded-full bg-accent font-medium text-white"
-                              : inMonth
-                                ? "font-medium text-text-primary"
-                                : "font-medium text-[#D1D5DB]"
-                          }`}
-                        >
-                          {date.getDate()}
+                        <span className="flex items-center gap-1">
+                          <span
+                            className={`flex min-h-9 min-w-9 items-center justify-center text-[13px] leading-none ${
+                              isToday
+                                ? "rounded-full bg-accent font-medium text-white"
+                                : inMonth
+                                  ? "font-medium text-text-primary"
+                                  : "font-medium text-[#D1D5DB]"
+                            }`}
+                          >
+                            {date.getDate()}
+                          </span>
+                          {isClosedDay ? (
+                            <span className="text-[10px] font-medium leading-none text-reservation-waitlist-text">
+                              休業日
+                            </span>
+                          ) : null}
                         </span>
                       </button>
                     </div>

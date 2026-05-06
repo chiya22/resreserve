@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { getCurrentStaff } from "@/lib/data/auth";
+import { listClosedDaysInRange } from "@/lib/data/closed-days";
 import { listReservationCategories } from "@/lib/data/reservation-categories";
 import { getReservationsByDateRange } from "@/lib/data/reservations";
 import { listTables } from "@/lib/data/tables";
@@ -58,10 +59,11 @@ export default async function CalendarPage({
 
   const { rangeStart, rangeEnd } = getDisplayRange(safeBase, view);
 
-  const [reservations, tables, categoryRows] = await Promise.all([
+  const [reservations, tables, categoryRows, closedDays] = await Promise.all([
     getReservationsByDateRange(rangeStart, rangeEnd),
     listTables(),
     listReservationCategories(),
+    listClosedDaysInRange(rangeStart, rangeEnd),
   ]);
 
   const dateKey = safeBase.toISOString();
@@ -76,6 +78,7 @@ export default async function CalendarPage({
       staffName={staff.name}
       staffIsOwner={staff.role === "owner"}
       categoryRows={categoryRows}
+      initialClosedDays={closedDays}
     />
   );
 }

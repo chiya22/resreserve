@@ -2,35 +2,32 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ReservationCategoriesManager } from "@/components/settings/ReservationCategoriesManager";
+import { ClosedDaysManager } from "@/components/settings/ClosedDaysManager";
 import { getCurrentStaff } from "@/lib/data/auth";
-import { listReservationCategories } from "@/lib/data/reservation-categories";
+import { listClosedDaysAll } from "@/lib/data/closed-days";
 
 export const metadata: Metadata = {
-  title: "予約カテゴリ | 予約管理",
-  description:
-    "予約カテゴリの作成・並び順・表示色テーマなどを管理します（オーナーのみ）",
+  title: "休業日設定 | 予約管理",
+  description: "休業日を登録・更新・削除します（オーナーのみ）",
 };
 
-export default async function SettingsCategoriesPage() {
+export default async function SettingsClosedDaysPage() {
   const me = await getCurrentStaff();
   if (!me) redirect("/login?message=staff_required");
   if (me.role !== "owner") redirect("/calendar");
 
-  const categories = await listReservationCategories();
+  const closedDays = await listClosedDaysAll();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[17px] font-medium text-text-primary">
-          予約カテゴリ
-        </h1>
+        <h1 className="text-[17px] font-medium text-text-primary">休業日設定</h1>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/settings/closed-days"
+            href="/settings/categories"
             className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary transition-colors hover:bg-bg-hover"
           >
-            休業日設定
+            予約カテゴリ
           </Link>
           <Link
             href="/settings/staff"
@@ -46,7 +43,7 @@ export default async function SettingsCategoriesPage() {
           </Link>
         </div>
       </div>
-      <ReservationCategoriesManager initialRows={categories} />
+      <ClosedDaysManager initialRows={closedDays} />
     </div>
   );
 }

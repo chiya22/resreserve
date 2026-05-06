@@ -30,7 +30,7 @@ import {
 } from "@/lib/calendar/reservation-palette-classes";
 import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
-import { isSameLocalDay, weekdayLabelJa } from "@/lib/calendar/week";
+import { isSameLocalDay, localDateKey, weekdayLabelJa } from "@/lib/calendar/week";
 
 const HOUR_COUNT = DAY_HOUR_END - DAY_HOUR_START;
 const GRID_BODY_PX = HOUR_COUNT * DAY_PX_PER_HOUR;
@@ -118,6 +118,7 @@ export type DayCalendarViewProps = {
   onSelectViewDay: () => void;
   onSelectViewWeek: () => void;
   onSelectViewMonth: () => void;
+  closedDayByDate: Map<string, string | null>;
   onSlotClick: (offsetY: number) => void;
   onReservationClick: (r: Reservation) => void;
 };
@@ -141,6 +142,7 @@ export function DayCalendarView({
   onSelectViewDay,
   onSelectViewWeek,
   onSelectViewMonth,
+  closedDayByDate,
   onSlotClick,
   onReservationClick,
 }: DayCalendarViewProps) {
@@ -178,6 +180,9 @@ export function DayCalendarView({
   );
 
   const isTitleToday = isSameLocalDay(daySelected, now);
+  const dayKey = localDateKey(daySelected);
+  const isClosedDay = closedDayByDate.has(dayKey);
+  const closedDayNote = closedDayByDate.get(dayKey);
   const y = daySelected.getFullYear();
   const mo = daySelected.getMonth() + 1;
   const wd = weekdayLabelJa(daySelected);
@@ -196,15 +201,22 @@ export function DayCalendarView({
           </button>
           <div className="flex min-w-0 flex-wrap items-center justify-center gap-0.5 text-center text-[17px] font-medium leading-none text-text-primary">
             <span>{y}年{mo}月</span>
-            {isTitleToday ? (
-              <span className="mx-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
-                {daySelected.getDate()}
-              </span>
-            ) : (
-              <span className="mx-0.5 flex min-h-9 min-w-9 shrink-0 items-center justify-center">
-                {daySelected.getDate()}
-              </span>
-            )}
+            <span className="mx-0.5 flex items-center gap-1">
+              {isTitleToday ? (
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
+                  {daySelected.getDate()}
+                </span>
+              ) : (
+                <span className="flex min-h-9 min-w-9 items-center justify-center">
+                  {daySelected.getDate()}
+                </span>
+              )}
+              {isClosedDay ? (
+                <span className="text-[11px] font-medium leading-none text-reservation-waitlist-text">
+                  休業日
+                </span>
+              ) : null}
+            </span>
             <span>
               日（{wd}）
             </span>
@@ -266,7 +278,7 @@ export function DayCalendarView({
       </header>
 
       <div className={calScrollX}>
-        <div className="min-w-[320px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary md:min-w-[400px]">
+          <div className="min-w-[320px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary md:min-w-[400px]">
           <div
             className="flex flex-wrap items-center gap-2 border-b-[0.5px] border-border py-2 pl-[52px] pr-2 md:pl-14"
             aria-label="当日サマリー"
@@ -324,10 +336,14 @@ export function DayCalendarView({
                 aria-label="空きスロットから予約を作成"
                 className="absolute inset-0 z-[1] cursor-default touch-manipulation border-0 bg-transparent p-0 outline-none"
                 onClick={(e) => {
+                  if (isClosedDay) return;
                   e.stopPropagation();
                   onSlotClick(e.nativeEvent.offsetY);
                 }}
               />
+              {isClosedDay ? (
+                <div className="pointer-events-none absolute inset-0 z-[2] bg-reservation-waitlist-bg/35" />
+              ) : null}
 
               <div className="pointer-events-none absolute inset-0 z-[5] flex">
                 {byLane.map((col, laneIdx) => (
