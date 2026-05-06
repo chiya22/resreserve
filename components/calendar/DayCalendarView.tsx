@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
-import { CATEGORY_LABEL } from "@/lib/calendar/calendar-constants";
 import {
   computeDayOverlapLayouts,
   type DayOverlapLayout,
@@ -11,7 +10,12 @@ import {
   DAY_PX_PER_HOUR,
   nowMarkerTopPx,
 } from "@/lib/calendar/day-layout";
-import type { Reservation, ReservationCategory } from "@/lib/calendar/types";
+import { parsePaletteKey } from "@/lib/calendar/palette-key";
+import {
+  RESERVATION_BLOCK_CLASS,
+  RESERVATION_TONE_CLASS,
+} from "@/lib/calendar/reservation-palette-classes";
+import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
 import { isSameLocalDay, weekdayLabelJa } from "@/lib/calendar/week";
 
@@ -22,34 +26,6 @@ const HOUR_ROWS = Array.from(
   { length: HOUR_COUNT },
   (_, i) => DAY_HOUR_START + i,
 ) as number[];
-
-const CATEGORY_CLASS: Record<ReservationCategory, string> = {
-  normal:
-    "bg-reservation-normal-bg text-reservation-normal-text border-l-reservation-normal-border",
-  course:
-    "bg-reservation-course-bg text-reservation-course-text border-l-reservation-course-border",
-  private:
-    "bg-reservation-private-bg text-reservation-private-text border-l-reservation-private-border",
-  waitlist:
-    "bg-reservation-waitlist-bg text-reservation-waitlist-text border-l-reservation-waitlist-border",
-  vip: "bg-reservation-vip-bg text-reservation-vip-text border-l-reservation-vip-border",
-};
-
-const SUMMARY_CAT: Record<ReservationCategory, string> = {
-  normal: "bg-reservation-normal-bg text-reservation-normal-text",
-  course: "bg-reservation-course-bg text-reservation-course-text",
-  private: "bg-reservation-private-bg text-reservation-private-text",
-  waitlist: "bg-reservation-waitlist-bg text-reservation-waitlist-text",
-  vip: "bg-reservation-vip-bg text-reservation-vip-text",
-};
-
-const CATEGORY_ORDER: ReservationCategory[] = [
-  "normal",
-  "course",
-  "private",
-  "waitlist",
-  "vip",
-];
 
 function formatTimeHM(d: Date): string {
   const h = String(d.getHours()).padStart(2, "0");
@@ -72,7 +48,7 @@ function DayReservationBlock({
 
   return (
     <div
-      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${CATEGORY_CLASS[res.category]}`}
+      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
       style={{ top, height }}
       role="button"
       tabIndex={0}
@@ -105,12 +81,19 @@ function DayReservationBlock({
   );
 }
 
+export type DaySummaryCategory = {
+  id: string;
+  label: string;
+  palette_key: string;
+};
+
 export type DayCalendarViewProps = {
   daySelected: Date;
   now: Date;
   activeView: CalendarViewMode;
   staffName: string;
   staffIsOwner: boolean;
+  summaryCategories: DaySummaryCategory[];
   reservations: Reservation[];
   onPrevDay: () => void;
   onNextDay: () => void;
@@ -129,6 +112,7 @@ export function DayCalendarView({
   activeView,
   staffName,
   staffIsOwner,
+  summaryCategories,
   reservations,
   onPrevDay,
   onNextDay,
@@ -146,9 +130,9 @@ export function DayCalendarView({
     );
     const count = list.length;
     const guests = list.reduce((s, r) => s + r.partySize, 0);
-    const catCounts = new Map<ReservationCategory, number>();
+    const catCounts = new Map<string, number>();
     for (const r of list) {
-      catCounts.set(r.category, (catCounts.get(r.category) ?? 0) + 1);
+      catCounts.set(r.categoryId, (catCounts.get(r.categoryId) ?? 0) + 1);
     }
     return { count, guests, catCounts };
   }, [reservations, daySelected]);
@@ -278,15 +262,16 @@ export function DayCalendarView({
             <span className="rounded-xl border-[0.5px] border-border bg-bg-hover px-[10px] py-[3px] text-[11px] font-medium text-text-primary">
               本日 {stats.count}件 / {stats.guests}名
             </span>
-            {CATEGORY_ORDER.map((cat) => {
-              const n = stats.catCounts.get(cat) ?? 0;
+            {summaryCategories.map((cat) => {
+              const n = stats.catCounts.get(cat.id) ?? 0;
               if (n <= 0) return null;
+              const pk = parsePaletteKey(cat.palette_key);
               return (
                 <span
-                  key={cat}
-                  className={`rounded-xl border-[0.5px] border-transparent px-[10px] py-[3px] text-[11px] font-medium ${SUMMARY_CAT[cat]}`}
+                  key={cat.id}
+                  className={`rounded-xl border-[0.5px] border-transparent px-[10px] py-[3px] text-[11px] font-medium ${RESERVATION_TONE_CLASS[pk]}`}
                 >
-                  {CATEGORY_LABEL[cat]} {n}件
+                  {cat.label} {n}件
                 </span>
               );
             })}

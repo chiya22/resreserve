@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
-import type { Reservation, ReservationCategory } from "@/lib/calendar/types";
+import type { Reservation } from "@/lib/calendar/types";
+import { RESERVATION_TONE_CLASS } from "@/lib/calendar/reservation-palette-classes";
 import { buildMonthWeeks, isInMonth } from "@/lib/calendar/month-grid";
 import { formatTimeHm } from "@/lib/calendar/datetime-ui";
 import {
@@ -18,14 +19,6 @@ const WEEK_HEADER = ["日", "月", "火", "水", "木", "金", "土"] as const;
 const MONTH_CELL_H = 118;
 /** 複数日バー用オーバーレイの最大高（多段時は下のチップ領域を潰さない） */
 const MONTH_SPAN_OVERLAY_MAX_H = 52;
-
-const MONTH_CHIP: Record<ReservationCategory, string> = {
-  normal: "bg-reservation-normal-bg text-reservation-normal-text",
-  course: "bg-reservation-course-bg text-reservation-course-text",
-  private: "bg-reservation-private-bg text-reservation-private-text",
-  waitlist: "bg-reservation-waitlist-bg text-reservation-waitlist-text",
-  vip: "bg-reservation-vip-bg text-reservation-vip-text",
-};
 
 export type MonthCalendarViewProps = {
   monthAnchor: Date;
@@ -240,7 +233,7 @@ export function MonthCalendarView({
                             e.stopPropagation();
                             onReservationClick(r);
                           }}
-                          className={`h-5 max-w-full shrink-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] px-[5px] py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] ${MONTH_CHIP[r.category]}`}
+                          className={`h-5 max-w-full shrink-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] px-[5px] py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] ${RESERVATION_TONE_CLASS[r.paletteKey]}`}
                         >
                           {formatTimeHm(r.startAt)} {r.customerName}
                         </button>
@@ -289,7 +282,7 @@ export function MonthCalendarView({
                         top,
                         height: 20,
                       }}
-                      className={`pointer-events-auto absolute box-border overflow-hidden text-ellipsis whitespace-nowrap px-[5px] py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] ${MONTH_CHIP[seg.res.category]} ${rounded}`}
+                      className={`pointer-events-auto absolute box-border overflow-hidden text-ellipsis whitespace-nowrap px-[5px] py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] ${RESERVATION_TONE_CLASS[seg.res.paletteKey]} ${rounded}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onReservationClick(seg.res);

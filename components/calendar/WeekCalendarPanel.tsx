@@ -3,7 +3,8 @@
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import type { DayOverlapLayout } from "@/lib/calendar/day-layout";
 import { formatHmRange } from "@/lib/calendar/datetime-ui";
-import type { Reservation, ReservationCategory } from "@/lib/calendar/types";
+import type { Reservation } from "@/lib/calendar/types";
+import { RESERVATION_BLOCK_CLASS } from "@/lib/calendar/reservation-palette-classes";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
 import { isSameLocalDay, weekdayLabelJa } from "@/lib/calendar/week";
 
@@ -30,18 +31,6 @@ const HOUR_ROWS = Array.from(
   (_, i) => HOUR_START + i,
 ) as number[];
 
-const CATEGORY_CLASS: Record<ReservationCategory, string> = {
-  normal:
-    "bg-reservation-normal-bg text-reservation-normal-text border-l-reservation-normal-border",
-  course:
-    "bg-reservation-course-bg text-reservation-course-text border-l-reservation-course-border",
-  private:
-    "bg-reservation-private-bg text-reservation-private-text border-l-reservation-private-border",
-  waitlist:
-    "bg-reservation-waitlist-bg text-reservation-waitlist-text border-l-reservation-waitlist-border",
-  vip: "bg-reservation-vip-bg text-reservation-vip-text border-l-reservation-vip-border",
-};
-
 function WeekReservationBlock({
   res,
   layout,
@@ -53,7 +42,7 @@ function WeekReservationBlock({
 }) {
   return (
     <div
-      className={`pointer-events-auto absolute inset-x-[2px] z-[5] cursor-pointer rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[6px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${CATEGORY_CLASS[res.category]}`}
+      className={`pointer-events-auto absolute inset-x-[2px] z-[5] cursor-pointer rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[6px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
       style={{
         top: layout.top,
         height: layout.height,

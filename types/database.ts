@@ -53,9 +53,45 @@ export type Database = {
           },
         ]
       }
+      reservation_categories: {
+        Row: {
+          blocks_entire_calendar: boolean
+          code: string
+          created_at: string
+          id: string
+          label: string
+          palette_key: string
+          show_in_booking_form: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          blocks_entire_calendar?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          label: string
+          palette_key: string
+          show_in_booking_form?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          blocks_entire_calendar?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
+          palette_key?: string
+          show_in_booking_form?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reservations: {
         Row: {
-          category: Database["public"]["Enums"]["reservation_category"]
+          category_id: string
           created_at: string
           created_by: string | null
           customer_name: string
@@ -71,7 +107,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          category?: Database["public"]["Enums"]["reservation_category"]
+          category_id?: string
           created_at?: string
           created_by?: string | null
           customer_name: string
@@ -87,7 +123,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          category?: Database["public"]["Enums"]["reservation_category"]
+          category_id?: string
           created_at?: string
           created_by?: string | null
           customer_name?: string
@@ -103,6 +139,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_created_by_fkey"
             columns: ["created_by"]
@@ -183,7 +226,6 @@ export type Database = {
     Enums: {
       notification_channel: "email" | "sms" | "line"
       notification_type: "confirmation" | "reminder" | "cancellation"
-      reservation_category: "normal" | "course" | "private" | "waitlist" | "vip"
       reservation_status:
         | "confirmed"
         | "pending"
@@ -320,7 +362,6 @@ export const Constants = {
     Enums: {
       notification_channel: ["email", "sms", "line"],
       notification_type: ["confirmation", "reminder", "cancellation"],
-      reservation_category: ["normal", "course", "private", "waitlist", "vip"],
       reservation_status: [
         "confirmed",
         "pending",

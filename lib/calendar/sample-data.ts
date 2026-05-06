@@ -1,19 +1,33 @@
 import type { Reservation } from "./types";
 import { addDays, startOfWeekSunday } from "./week";
 
+/** デモ／検証用（固定 UUID と palette はダミー。実運用クエリとは無関係） */
+const SAMPLE_CAT = {
+  normal:
+    "00000000-0000-4000-a000-000000000011" as const,
+  course:
+    "00000000-0000-4000-a000-000000000022" as const,
+  vip: "00000000-0000-4000-a000-000000000055" as const,
+  waitlist:
+    "00000000-0000-4000-a000-000000000044" as const,
+  private:
+    "00000000-0000-4000-a000-000000000033" as const,
+};
+
 /** 指定週（日曜始まり）の月〜土にサンプル予約を載せる */
 export function getSampleReservationsForWeek(
   weekStartSunday: Date,
 ): Reservation[] {
-  const sun = new Date(weekStartSunday);
-  sun.setHours(0, 0, 0, 0);
+  const weekStart = new Date(weekStartSunday);
+  weekStart.setHours(0, 0, 0, 0);
 
   const at = (dayOffsetFromSun: number, h: number, m: number) => {
-    const d = addDays(sun, dayOffsetFromSun);
+    const d = addDays(weekStart, dayOffsetFromSun);
     d.setHours(h, m, 0, 0);
     return d;
   };
 
+  const sun = 0;
   const mon = 1;
   const tue = 2;
   const wed = 3;
@@ -26,92 +40,92 @@ export function getSampleReservationsForWeek(
       id: "s1",
       customerName: "田中様",
       partySize: 4,
-      category: "normal",
+      categoryId: SAMPLE_CAT.normal,
+      paletteKey: "青",
+      categoryLabel: "通常",
       startAt: at(mon, 12, 0),
       endAt: at(mon, 13, 30),
-      tableOrNote: "テーブル A-2",
+      tableOrNote: "A-1",
     },
     {
       id: "s2",
-      customerName: "鈴木様",
-      partySize: 6,
-      category: "course",
+      customerName: "佐藤様",
+      partySize: 2,
+      categoryId: SAMPLE_CAT.course,
+      paletteKey: "緑",
+      categoryLabel: "コース",
       startAt: at(mon, 18, 0),
-      endAt: at(mon, 20, 0),
-      tableOrNote: "ランチコース",
+      endAt: at(mon, 21, 0),
+      tableOrNote: "個室",
     },
     {
       id: "s3",
-      customerName: "佐藤様",
-      partySize: 2,
-      category: "normal",
+      customerName: "鈴木様",
+      partySize: 3,
+      categoryId: SAMPLE_CAT.normal,
+      paletteKey: "青",
+      categoryLabel: "通常",
       startAt: at(tue, 11, 30),
-      endAt: at(tue, 12, 30),
-      tableOrNote: "テーブル C-3",
+      endAt: at(tue, 13, 0),
+      tableOrNote: "B-1",
+      notes: "窓側希望",
     },
     {
       id: "s4",
-      customerName: "貸切・会社宴会",
+      customerName: "貸切イベント",
       partySize: 30,
-      category: "private",
-      startAt: at(wed, 19, 0),
-      endAt: at(wed, 21, 0),
+      categoryId: SAMPLE_CAT.private,
+      paletteKey: "アンバー",
+      categoryLabel: "貸し切り",
+      startAt: at(thu, 17, 0),
+      endAt: at(thu, 21, 0),
       tableOrNote: "2F",
     },
     {
       id: "s5",
-      customerName: "山田様",
-      partySize: 2,
-      category: "vip",
-      startAt: at(thu, 18, 30),
-      endAt: at(thu, 20, 30),
-      tableOrNote: "個室",
+      customerName: "VIP 山田様",
+      partySize: 6,
+      categoryId: SAMPLE_CAT.vip,
+      paletteKey: "紫",
+      categoryLabel: "VIP",
+      startAt: at(fri, 19, 0),
+      endAt: at(fri, 21, 30),
+      tableOrNote: "個室1",
     },
     {
       id: "s6",
-      customerName: "誕生日会",
-      partySize: 10,
-      category: "private",
-      startAt: at(fri, 12, 0),
-      endAt: at(fri, 13, 30),
-      tableOrNote: "2F",
+      customerName: "木村様",
+      partySize: 2,
+      categoryId: SAMPLE_CAT.private,
+      paletteKey: "アンバー",
+      categoryLabel: "貸し切り",
+      startAt: at(sat, 12, 0),
+      endAt: at(sat, 17, 0),
+      tableOrNote: "フロア",
     },
     {
       id: "s7",
-      customerName: "木村様",
+      customerName: "高橋様",
       partySize: 4,
-      category: "course",
-      startAt: at(fri, 18, 0),
-      endAt: at(fri, 19, 30),
-      tableOrNote: "ディナーコース",
+      categoryId: SAMPLE_CAT.course,
+      paletteKey: "緑",
+      categoryLabel: "コース",
+      startAt: at(sun, 16, 0),
+      endAt: at(sun, 17, 30),
+      tableOrNote: "A-2",
     },
     {
       id: "s8",
-      customerName: "加藤様",
-      partySize: 4,
-      category: "waitlist",
-      startAt: at(sat, 19, 30),
-      endAt: at(sat, 21, 0),
-      tableOrNote: "テーブル B-3",
+      customerName: "キャンセル待ち 中村様",
+      partySize: 2,
+      categoryId: SAMPLE_CAT.waitlist,
+      paletteKey: "赤",
+      categoryLabel: "キャンセル待ち",
+      startAt: at(wed, 19, 0),
+      endAt: at(wed, 20, 30),
+      tableOrNote: "—",
     },
   ];
 }
 
-/** 月グリッド用: 表示週ごとのサンプルを結合し、ID を一意化（mw{週ms}__{元ID}） */
-export function getSampleReservationsForMonthMatrix(
-  monthAnchor: Date,
-): Reservation[] {
-  const y = monthAnchor.getFullYear();
-  const m = monthAnchor.getMonth();
-  const gridStart = startOfWeekSunday(new Date(y, m, 1));
-  const out: Reservation[] = [];
-  for (let wi = 0; wi < 6; wi++) {
-    const ws = addDays(gridStart, wi * 7);
-    const chunk = getSampleReservationsForWeek(ws);
-    const prefix = `mw${ws.getTime()}__`;
-    for (const r of chunk) {
-      out.push({ ...r, id: `${prefix}${r.id}` });
-    }
-  }
-  return out;
-}
+export { startOfWeekSunday };

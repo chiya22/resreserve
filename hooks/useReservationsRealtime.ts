@@ -2,30 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { RESERVATION_WITH_TABLE_EMBED } from "@/lib/data/reservation-select-snippet";
 import { createClient } from "@/lib/supabase/client";
 import type { ReservationWithTable } from "@/types";
-
-const RESERVATION_WITH_TABLE_SELECT = `
-  id,
-  table_id,
-  customer_name,
-  customer_phone,
-  party_size,
-  category,
-  status,
-  start_at,
-  end_at,
-  notes,
-  internal_notes,
-  created_by,
-  created_at,
-  updated_at,
-  table:tables (
-    id,
-    name,
-    capacity
-  )
-`;
 
 type Options = {
   initialData: ReservationWithTable[];
@@ -36,7 +15,9 @@ export function useReservationsRealtime({ initialData }: Options) {
     useState<ReservationWithTable[]>(initialData);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- initialData は RSC 刷新で差し替わるため同期 */
     setReservations(initialData);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [initialData]);
 
   useEffect(() => {
@@ -55,7 +36,7 @@ export function useReservationsRealtime({ initialData }: Options) {
           const newRow = payload.new as { id: string };
           const { data } = await supabase
             .from("reservations")
-            .select(RESERVATION_WITH_TABLE_SELECT)
+            .select(RESERVATION_WITH_TABLE_EMBED)
             .eq("id", newRow.id)
             .single();
 
@@ -83,7 +64,7 @@ export function useReservationsRealtime({ initialData }: Options) {
 
           const { data } = await supabase
             .from("reservations")
-            .select(RESERVATION_WITH_TABLE_SELECT)
+            .select(RESERVATION_WITH_TABLE_EMBED)
             .eq("id", updated.id)
             .single();
 

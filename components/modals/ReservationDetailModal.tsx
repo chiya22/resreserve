@@ -1,24 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import {
-  CATEGORY_LABEL,
-  FORM_CATEGORY_OPTIONS,
-} from "@/lib/calendar/calendar-constants";
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
+
+import { editModeCategoryChoicesForId } from "@/lib/calendar/category-display";
 import {
   parseDateAndTime,
   toDateInputValue,
   toTimeSelectValue,
 } from "@/lib/calendar/datetime-ui";
+import { parsePaletteKey } from "@/lib/calendar/palette-key";
+import { RESERVATION_TONE_CLASS } from "@/lib/calendar/reservation-palette-classes";
 import {
   cancelReservation,
   updateReservation,
 } from "@/lib/data/reservation-actions";
-import type { ReservationCategory, ReservationWithTable, Table } from "@/types";
+import type { ReservationWithTable } from "@/types";
 
 export type ReservationDetailModalProps = {
   reservation: ReservationWithTable;
-  tables: Table[];
+  categoryLabelById: Map<string, string>;
+  bookingCategoryOptions: { value: string; label: string }[];
   onClose: () => void;
   onUpdated?: () => void;
   onDeleted?: () => void;
@@ -35,17 +42,10 @@ function formatJapaneseRange(start: Date, end: Date): string {
   return `${y}年${mo}月${d}日 ${sh}:${sm} 〜 ${eh}:${em}`;
 }
 
-const BADGE_CLASS: Record<ReservationCategory, string> = {
-  normal: "bg-reservation-normal-bg text-reservation-normal-text",
-  course: "bg-reservation-course-bg text-reservation-course-text",
-  private: "bg-reservation-private-bg text-reservation-private-text",
-  waitlist: "bg-reservation-waitlist-bg text-reservation-waitlist-text",
-  vip: "bg-reservation-vip-bg text-reservation-vip-text",
-};
-
 export function ReservationDetailModal({
   reservation,
-  tables,
+  categoryLabelById,
+  bookingCategoryOptions,
   onClose,
   onUpdated,
   onDeleted,
@@ -54,15 +54,14 @@ export function ReservationDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const cat = reservation.reservation_categories;
+
   const [customerName, setCustomerName] = useState(reservation.customer_name);
   const [customerPhone, setCustomerPhone] = useState(
     reservation.customer_phone ?? "",
   );
   const [partySize, setPartySize] = useState(reservation.party_size);
-  const [tableId, setTableId] = useState(reservation.table_id ?? "");
-  const [category, setCategory] = useState<ReservationCategory>(
-    reservation.category,
-  );
+  const [categoryId, setCategoryId] = useState<string>(reservation.category_id);
   const [notes, setNotes] = useState(reservation.notes ?? "");
   const [startDate, setStartDate] = useState(
     toDateInputValue(new Date(reservation.start_at)),
@@ -77,34 +76,34 @@ export function ReservationDetailModal({
     toTimeSelectValue(new Date(reservation.end_at)),
   );
 
+  /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect --
+     別予約切替・Realtime 更新時のみ id / updated_at でフォーム全体を同期 */
   useEffect(() => {
     setMode("view");
     setError(null);
     setCustomerName(reservation.customer_name);
     setCustomerPhone(reservation.customer_phone ?? "");
     setPartySize(reservation.party_size);
-    setTableId(reservation.table_id ?? "");
-    setCategory(reservation.category);
+    setCategoryId(reservation.category_id);
     setNotes(reservation.notes ?? "");
     setStartDate(toDateInputValue(new Date(reservation.start_at)));
     setStartTime(toTimeSelectValue(new Date(reservation.start_at)));
     setEndDate(toDateInputValue(new Date(reservation.end_at)));
     setEndTime(toTimeSelectValue(new Date(reservation.end_at)));
   }, [reservation.id, reservation.updated_at]);
+  /* eslint-enable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 
   const categoryChoices = useMemo(() => {
-    const base = FORM_CATEGORY_OPTIONS.map((o) => ({
-      value: o.value as ReservationCategory,
-      label: o.label,
-    }));
-    if (reservation.category === "waitlist") {
-      return [
-        ...base,
-        { value: "waitlist" as const, label: "キャンセル待ち" },
-      ];
-    }
-    return base;
-  }, [reservation.category]);
+    return editModeCategoryChoicesForId(
+      reservation.category_id,
+      bookingCategoryOptions,
+      categoryLabelById,
+    );
+  }, [
+    reservation.category_id,
+    bookingCategoryOptions,
+    categoryLabelById,
+  ]);
 
   function handleCancelReservation() {
     setError(null);
@@ -124,15 +123,13 @@ export function ReservationDetailModal({
     setError(null);
     const startAt = parseDateAndTime(startDate, startTime);
     const endAt = parseDateAndTime(endDate, endTime);
-    const tid = tableId.trim();
 
     startTransition(async () => {
       const result = await updateReservation(reservation.id, {
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || null,
         party_size: partySize,
-        table_id: tid.length > 0 ? tid : null,
-        category,
+        category_id: categoryId,
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
         notes: notes.trim() || null,
@@ -149,6 +146,10 @@ export function ReservationDetailModal({
   const startD = new Date(reservation.start_at);
   const endD = new Date(reservation.end_at);
 
+  const viewBadgeTone = RESERVATION_TONE_CLASS[
+    parsePaletteKey(cat.palette_key)
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]">
       <div
@@ -160,9 +161,9 @@ export function ReservationDetailModal({
         <div className="flex items-start justify-between gap-2 border-b border-border px-5 py-3">
           <span
             id="detail-reservation-title"
-            className={`inline-flex max-w-full items-center rounded-xl px-2.5 py-1 text-[11px] font-medium ${BADGE_CLASS[reservation.category]}`}
+            className={`inline-flex max-w-full items-center rounded-xl px-2.5 py-1 text-[11px] font-medium ${viewBadgeTone}`}
           >
-            {CATEGORY_LABEL[reservation.category]}
+            {cat.label}
           </span>
           <button
             type="button"
@@ -236,7 +237,7 @@ export function ReservationDetailModal({
                 <input
                   type="number"
                   min={1}
-                  max={50}
+                  max={200}
                   required
                   value={partySize}
                   onChange={(ev) => setPartySize(Number(ev.target.value))}
@@ -295,23 +296,6 @@ export function ReservationDetailModal({
                   />
                 </div>
               </div>
-              <div>
-                <label className="mb-1 block text-xs text-text-tertiary">
-                  テーブル
-                </label>
-                <select
-                  value={tableId}
-                  onChange={(ev) => setTableId(ev.target.value)}
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
-                >
-                  <option value="">未割当</option>
-                  {tables.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
               <fieldset>
                 <legend className="mb-1 text-xs text-text-tertiary">
                   カテゴリ
@@ -324,8 +308,8 @@ export function ReservationDetailModal({
                     >
                       <input
                         type="radio"
-                        checked={category === c.value}
-                        onChange={() => setCategory(c.value)}
+                        checked={categoryId === c.value}
+                        onChange={() => setCategoryId(c.value)}
                       />
                       {c.label}
                     </label>
@@ -388,10 +372,8 @@ export function ReservationDetailModal({
                 </span>
               </div>
               <div className="flex gap-2">
-                <span className="w-20 shrink-0 text-text-tertiary">テーブル</span>
-                <span className="text-text-primary">
-                  {reservation.table?.name ?? "未割当"}
-                </span>
+                <span className="w-20 shrink-0 text-text-tertiary">カテゴリ</span>
+                <span className="text-text-primary">{cat.label}</span>
               </div>
               {reservation.notes ? (
                 <div className="flex gap-2">

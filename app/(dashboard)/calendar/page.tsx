@@ -3,12 +3,13 @@ import { redirect } from "next/navigation";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { getCurrentStaff } from "@/lib/data/auth";
+import { listReservationCategories } from "@/lib/data/reservation-categories";
 import { getReservationsByDateRange } from "@/lib/data/reservations";
 import { listTables } from "@/lib/data/tables";
 
 export const metadata: Metadata = {
   title: "予約カレンダー | 予約管理",
-  description: "飲食店の予約を週・日のタイムラインで表示します。",
+  description: "飲食店の予約を月・週・日で表示します。",
 };
 
 function getDisplayRange(
@@ -50,16 +51,17 @@ export default async function CalendarPage({
   const view: "day" | "week" | "month" =
     rawView === "day" || rawView === "week" || rawView === "month"
       ? rawView
-      : "week";
+      : "month";
 
   const baseDate = sp.date ? new Date(sp.date) : new Date();
   const safeBase = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
 
   const { rangeStart, rangeEnd } = getDisplayRange(safeBase, view);
 
-  const [reservations, tables] = await Promise.all([
+  const [reservations, tables, categoryRows] = await Promise.all([
     getReservationsByDateRange(rangeStart, rangeEnd),
     listTables(),
+    listReservationCategories(),
   ]);
 
   const dateKey = safeBase.toISOString();
@@ -73,6 +75,7 @@ export default async function CalendarPage({
       initialDate={dateKey}
       staffName={staff.name}
       staffIsOwner={staff.role === "owner"}
+      categoryRows={categoryRows}
     />
   );
 }

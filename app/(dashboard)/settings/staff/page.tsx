@@ -22,12 +22,20 @@ export default async function SettingsStaffPage() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[17px] font-medium text-text-primary">スタッフアカウント</h1>
-        <Link
-          href="/calendar"
-          className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary transition-colors hover:bg-bg-hover"
-        >
-          カレンダーへ
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/settings/categories"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary transition-colors hover:bg-bg-hover"
+          >
+            予約カテゴリ
+          </Link>
+          <Link
+            href="/calendar"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary transition-colors hover:bg-bg-hover"
+          >
+            カレンダーへ
+          </Link>
+        </div>
       </div>
       <StaffAccountsManager staff={accounts} currentUserId={me.user_id} />
     </div>

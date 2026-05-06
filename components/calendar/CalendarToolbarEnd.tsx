@@ -19,12 +19,20 @@ export function CalendarToolbarEnd({
         <span className="max-w-[160px] truncate text-xs text-text-secondary">{staffName}</span>
       ) : null}
       {staffIsOwner ? (
-        <Link
-          href="/settings/staff"
-          className="rounded-md border border-border px-2.5 py-1 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover"
-        >
-          アカウント管理
-        </Link>
+        <>
+          <Link
+            href="/settings/categories"
+            className="rounded-md border border-border px-2.5 py-1 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover"
+          >
+            カテゴリ
+          </Link>
+          <Link
+            href="/settings/staff"
+            className="rounded-md border border-border px-2.5 py-1 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover"
+          >
+            アカウント管理
+          </Link>
+        </>
       ) : null}
       <form action={logout}>
         <button

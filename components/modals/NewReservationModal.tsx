@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
-import { FORM_CATEGORY_OPTIONS } from "@/lib/calendar/calendar-constants";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
 import {
   addMinutes,
   defaultNewReservationRange,
@@ -10,59 +9,71 @@ import {
   toTimeSelectValue,
 } from "@/lib/calendar/datetime-ui";
 import { createReservation } from "@/lib/data/reservation-actions";
-import type { ReservationCategory, Table } from "@/types";
+
+function buildInitialDatetime(defaultStartAt: string | undefined) {
+  if (defaultStartAt) {
+    const s = new Date(defaultStartAt);
+    if (!Number.isNaN(s.getTime())) {
+      const end = addMinutes(s, 90);
+      return {
+        startDate: toDateInputValue(s),
+        startTime: toTimeSelectValue(s),
+        endDate: toDateInputValue(end),
+        endTime: toTimeSelectValue(end),
+      };
+    }
+  }
+  const base = defaultNewReservationRange();
+  return {
+    startDate: toDateInputValue(base.start),
+    startTime: toTimeSelectValue(base.start),
+    endDate: toDateInputValue(base.end),
+    endTime: toTimeSelectValue(base.end),
+  };
+}
 
 export type NewReservationModalProps = {
-  tables: Table[];
+  bookingCategoryOptions: { value: string; label: string }[];
+  /** コード `normal` のカテゴリ id（サーバー側で決定）。なければ先頭チップが既定 */
+  defaultCategoryIdHint?: string;
   defaultStartAt?: string;
   onClose: () => void;
   onSuccess?: () => void;
 };
 
 export function NewReservationModal({
-  tables,
+  bookingCategoryOptions,
+  defaultCategoryIdHint,
   defaultStartAt,
   onClose,
   onSuccess,
 }: NewReservationModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [category, setCategory] =
-    useState<ReservationCategory>("normal");
+
+  const [categoryId, setCategoryId] = useState<string>(() => {
+    const hinted =
+      defaultCategoryIdHint &&
+      bookingCategoryOptions.some((o) => o.value === defaultCategoryIdHint)
+        ? defaultCategoryIdHint
+        : undefined;
+    return hinted ?? bookingCategoryOptions[0]?.value ?? "";
+  });
+
+  const resolvedCategoryId = useMemo(() => {
+    if (bookingCategoryOptions.some((o) => o.value === categoryId))
+      return categoryId;
+    return bookingCategoryOptions[0]?.value ?? "";
+  }, [bookingCategoryOptions, categoryId]);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [partySize, setPartySize] = useState(2);
-  const [tableId, setTableId] = useState<string>("");
+  const [partySize, setPartySize] = useState(10);
   const [notes, setNotes] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [endTime, setEndTime] = useState("");
-
-  const categoryChoices = useMemo(
-    () =>
-      FORM_CATEGORY_OPTIONS.map((o) => ({
-        value: o.value as ReservationCategory,
-        label: o.label,
-      })),
-    [],
+  const [datetime, setDatetime] = useState(() =>
+    buildInitialDatetime(defaultStartAt),
   );
-
-  useEffect(() => {
-    const base = defaultStartAt
-      ? (() => {
-          const s = new Date(defaultStartAt);
-          return Number.isNaN(s.getTime())
-            ? defaultNewReservationRange()
-            : { start: s, end: addMinutes(s, 90) };
-        })()
-      : defaultNewReservationRange();
-    setStartDate(toDateInputValue(base.start));
-    setStartTime(toTimeSelectValue(base.start));
-    setEndDate(toDateInputValue(base.end));
-    setEndTime(toTimeSelectValue(base.end));
-  }, [defaultStartAt]);
+  const { startDate, startTime, endDate, endTime } = datetime;
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -70,15 +81,23 @@ export function NewReservationModal({
 
     const startAt = parseDateAndTime(startDate, startTime);
     const endAt = parseDateAndTime(endDate, endTime);
-    const tid = tableId.trim();
+
+    if (bookingCategoryOptions.length === 0) {
+      setError("選択できるカテゴリがありません");
+      return;
+    }
+    if (!resolvedCategoryId.length) {
+      setError("カテゴリを選んでください");
+      return;
+    }
 
     startTransition(async () => {
       const result = await createReservation({
-        table_id: tid.length > 0 ? tid : null,
+        table_id: null,
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || null,
         party_size: partySize,
-        category,
+        category_id: resolvedCategoryId,
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
         notes: notes.trim() || null,
@@ -152,7 +171,7 @@ export function NewReservationModal({
               name="party_size"
               type="number"
               min={1}
-              max={50}
+              max={200}
               required
               value={partySize}
               onChange={(ev) => setPartySize(Number(ev.target.value))}
@@ -168,7 +187,9 @@ export function NewReservationModal({
                 type="date"
                 required
                 value={startDate}
-                onChange={(ev) => setStartDate(ev.target.value)}
+                onChange={(ev) =>
+                  setDatetime((d) => ({ ...d, startDate: ev.target.value }))
+                }
                 className="w-full rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-accent"
               />
             </div>
@@ -181,7 +202,9 @@ export function NewReservationModal({
                 step={1800}
                 required
                 value={startTime}
-                onChange={(ev) => setStartTime(ev.target.value)}
+                onChange={(ev) =>
+                  setDatetime((d) => ({ ...d, startTime: ev.target.value }))
+                }
                 className="w-full rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-accent"
               />
             </div>
@@ -193,7 +216,9 @@ export function NewReservationModal({
                 type="date"
                 required
                 value={endDate}
-                onChange={(ev) => setEndDate(ev.target.value)}
+                onChange={(ev) =>
+                  setDatetime((d) => ({ ...d, endDate: ev.target.value }))
+                }
                 className="w-full rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-accent"
               />
             </div>
@@ -206,52 +231,38 @@ export function NewReservationModal({
                 step={1800}
                 required
                 value={endTime}
-                onChange={(ev) => setEndTime(ev.target.value)}
+                onChange={(ev) =>
+                  setDatetime((d) => ({ ...d, endTime: ev.target.value }))
+                }
                 className="w-full rounded-lg border border-border px-2 py-2 text-sm outline-none focus:border-accent"
               />
             </div>
           </div>
-          <div>
-            <label
-              htmlFor="nr-table"
-              className="mb-1 block text-xs text-text-tertiary"
-            >
-              テーブル
-            </label>
-            <select
-              id="nr-table"
-              name="table_id"
-              value={tableId}
-              onChange={(ev) => setTableId(ev.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
-            >
-              <option value="">未割当</option>
-              {tables.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}（{t.capacity}名）
-                </option>
-              ))}
-            </select>
-          </div>
           <fieldset>
             <legend className="mb-1 text-xs text-text-tertiary">カテゴリ</legend>
-            <div className="flex flex-wrap gap-2">
-              {categoryChoices.map((c) => (
-                <label
-                  key={c.value}
-                  className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-xs has-[:checked]:border-accent has-[:checked]:bg-bg-hover"
-                >
-                  <input
-                    type="radio"
-                    name="category"
-                    value={c.value}
-                    checked={category === c.value}
-                    onChange={() => setCategory(c.value)}
-                  />
-                  {c.label}
-                </label>
-              ))}
-            </div>
+            {bookingCategoryOptions.length === 0 ? (
+              <p className="text-xs text-reservation-waitlist-text">
+                予約フォームで選べるカテゴリがありません。オーナーの「カテゴリ」設定で「新規予約フォーム」を有効にしてください。
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {bookingCategoryOptions.map((c) => (
+                  <label
+                    key={c.value}
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-xs has-[:checked]:border-accent has-[:checked]:bg-bg-hover"
+                  >
+                    <input
+                      type="radio"
+                      name="category"
+                      value={c.value}
+                    checked={resolvedCategoryId === c.value}
+                    onChange={() => setCategoryId(c.value)}
+                    />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
+            )}
           </fieldset>
           <div>
             <label
@@ -286,7 +297,7 @@ export function NewReservationModal({
             </button>
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || bookingCategoryOptions.length === 0}
               className="rounded-lg bg-accent px-5 py-2 text-[13px] text-white transition-colors hover:bg-[#3B7DE8] disabled:opacity-50"
             >
               {isPending ? "作成中…" : "予約を作成"}

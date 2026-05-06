@@ -8,6 +8,11 @@ import { WeekCalendarPanel } from "@/components/calendar/WeekCalendarPanel";
 import { NewReservationModal } from "@/components/modals/NewReservationModal";
 import { ReservationDetailModal } from "@/components/modals/ReservationDetailModal";
 import { useReservationsRealtime } from "@/hooks/useReservationsRealtime";
+import {
+  bookingFormCategoriesFromRows,
+  categoryLabelsById,
+  sortReservationCategories,
+} from "@/lib/calendar/category-display";
 import { HOUR_END } from "@/lib/calendar/calendar-constants";
 import { mapReservationWithTableToCalendar } from "@/lib/calendar/map-supabase-reservation";
 import type { Reservation } from "@/lib/calendar/types";
@@ -23,7 +28,11 @@ import {
   startOfLocalDay,
   startOfWeekSunday,
 } from "@/lib/calendar/week";
-import type { ReservationWithTable, Table } from "@/types";
+import type {
+  ReservationCategoryRow,
+  ReservationWithTable,
+  Table,
+} from "@/types";
 
 export type CalendarViewProps = {
   initialReservations: ReservationWithTable[];
@@ -32,6 +41,7 @@ export type CalendarViewProps = {
   initialDate: string;
   staffName: string;
   staffIsOwner: boolean;
+  categoryRows: ReservationCategoryRow[];
 };
 
 function endOfBusinessDay(d: Date): Date {
@@ -59,8 +69,34 @@ export function CalendarView({
   initialDate,
   staffName,
   staffIsOwner,
+  categoryRows,
 }: CalendarViewProps) {
   const router = useRouter();
+
+  const categoryLabelById = useMemo(
+    () => categoryLabelsById(categoryRows),
+    [categoryRows],
+  );
+  const bookingCategoryOptions = useMemo(
+    () => bookingFormCategoriesFromRows(categoryRows),
+    [categoryRows],
+  );
+
+  const defaultNewCategoryId = useMemo(() => {
+    const normal = categoryRows.find((c) => c.code === "normal");
+    if (normal && normal.show_in_booking_form) return normal.id;
+    return bookingCategoryOptions[0]?.value;
+  }, [categoryRows, bookingCategoryOptions]);
+
+  const daySummaryCategories = useMemo(
+    () =>
+      sortReservationCategories(categoryRows).map((r) => ({
+        id: r.id,
+        label: r.label,
+        palette_key: r.palette_key,
+      })),
+    [categoryRows],
+  );
 
   const anchorDate = useMemo(() => {
     const d = new Date(initialDate);
@@ -110,12 +146,6 @@ export function CalendarView({
       reservationRows.find((r) => r.id === selectedReservationId) ?? null
     );
   }, [selectedReservationId, reservationRows]);
-
-  useEffect(() => {
-    if (selectedReservationId && !selectedReservation) {
-      setSelectedReservationId(null);
-    }
-  }, [selectedReservationId, selectedReservation]);
 
   const weekDays = useMemo(
     () =>
@@ -236,6 +266,7 @@ export function CalendarView({
           activeView={view}
           staffName={staffName}
           staffIsOwner={staffIsOwner}
+          summaryCategories={daySummaryCategories}
           reservations={reservations}
           onPrevDay={() =>
             pushCalendar(startOfLocalDay(addDays(daySelected, -1)), "day")
@@ -273,8 +304,9 @@ export function CalendarView({
 
       {showNewModal ? (
         <NewReservationModal
-          key={newDefaultStart ?? "default"}
-          tables={tables}
+          key={`${newDefaultStart ?? "default"}-${bookingCategoryOptions.length}`}
+          bookingCategoryOptions={bookingCategoryOptions}
+          defaultCategoryIdHint={defaultNewCategoryId}
           defaultStartAt={newDefaultStart}
           onClose={() => {
             setShowNewModal(false);
@@ -286,7 +318,8 @@ export function CalendarView({
       {selectedReservation ? (
         <ReservationDetailModal
           reservation={selectedReservation}
-          tables={tables}
+          categoryLabelById={categoryLabelById}
+          bookingCategoryOptions={bookingCategoryOptions}
           onClose={() => setSelectedReservationId(null)}
         />
       ) : null}
