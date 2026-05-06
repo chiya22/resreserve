@@ -98,13 +98,6 @@ export function LoginForm({ redirectTo, serverMessageCode }: LoginFormProps) {
         className="rounded-xl border border-border bg-bg-primary p-6 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
       >
         <h1 className="text-[17px] font-medium text-text-primary">ログイン</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          オーナーから受け取ったアカウントとパスワードでログインしてください。
-          <span className="mt-1 block text-text-tertiary">
-            メールで発行された従来のアドレスをお持ちの場合は、そのまま入力できます。
-          </span>
-        </p>
-
         <div className="mt-6 space-y-4">
           <div>
             <label htmlFor="login-account" className="mb-1 block text-xs text-text-tertiary">
