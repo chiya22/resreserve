@@ -2,6 +2,10 @@
 
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
+  CategoryFilterControl,
+  type CalendarCategoryFilterOption,
+} from "@/components/calendar/CategoryFilterControl";
+import {
   calPageShell,
   calScrollX,
   calTimeGutter,
@@ -90,6 +94,10 @@ export type WeekCalendarPanelProps = {
   activeView: CalendarViewMode;
   staffName: string;
   staffIsOwner: boolean;
+  categoryFilterOptions: CalendarCategoryFilterOption[];
+  categoryFilterIds: string[];
+  onToggleCategoryFilter: (categoryId: string) => void;
+  onClearCategoryFilter: () => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
   onThisWeek: () => void;
@@ -111,6 +119,10 @@ export function WeekCalendarPanel({
   activeView,
   staffName,
   staffIsOwner,
+  categoryFilterOptions,
+  categoryFilterIds,
+  onToggleCategoryFilter,
+  onClearCategoryFilter,
   onPrevWeek,
   onNextWeek,
   onThisWeek,
@@ -161,6 +173,12 @@ export function WeekCalendarPanel({
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <CategoryFilterControl
+            options={categoryFilterOptions}
+            selectedIds={categoryFilterIds}
+            onToggle={onToggleCategoryFilter}
+            onClear={onClearCategoryFilter}
+          />
           <nav
             className="flex items-center gap-1"
             aria-label="カレンダー表示切り替え"

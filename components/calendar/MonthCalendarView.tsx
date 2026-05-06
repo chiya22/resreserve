@@ -3,10 +3,15 @@
 import { useMemo } from "react";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
+  CategoryFilterControl,
+  type CalendarCategoryFilterOption,
+} from "@/components/calendar/CategoryFilterControl";
+import {
   calPageShell,
   calScrollX,
   calTouchAccentSm,
   calTouchNavArrow,
+  calTouchOutlineSm,
   calViewSegBtn,
 } from "@/lib/calendar/calendar-toolbar-classes";
 import type { Reservation } from "@/lib/calendar/types";
@@ -35,10 +40,15 @@ export type MonthCalendarViewProps = {
   activeView: CalendarViewMode;
   staffName: string;
   staffIsOwner: boolean;
+  categoryFilterOptions: CalendarCategoryFilterOption[];
+  categoryFilterIds: string[];
+  onToggleCategoryFilter: (categoryId: string) => void;
+  onClearCategoryFilter: () => void;
   reservations: Reservation[];
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onOpenHeaderNew: () => void;
+  onToday: () => void;
   onSelectViewDay: () => void;
   onSelectViewWeek: () => void;
   onSelectViewMonth: () => void;
@@ -63,10 +73,15 @@ export function MonthCalendarView({
   activeView,
   staffName,
   staffIsOwner,
+  categoryFilterOptions,
+  categoryFilterIds,
+  onToggleCategoryFilter,
+  onClearCategoryFilter,
   reservations,
   onPrevMonth,
   onNextMonth,
   onOpenHeaderNew,
+  onToday,
   onSelectViewDay,
   onSelectViewWeek,
   onSelectViewMonth,
@@ -110,6 +125,9 @@ export function MonthCalendarView({
           >
             ▶
           </button>
+          <button type="button" onClick={onToday} className={calTouchOutlineSm}>
+            今日
+          </button>
           <button
             type="button"
             onClick={onOpenHeaderNew}
@@ -119,6 +137,12 @@ export function MonthCalendarView({
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <CategoryFilterControl
+            options={categoryFilterOptions}
+            selectedIds={categoryFilterIds}
+            onToggle={onToggleCategoryFilter}
+            onClear={onClearCategoryFilter}
+          />
           <nav
             className="flex items-center gap-1"
             aria-label="カレンダー表示切り替え"

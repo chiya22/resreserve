@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DayCalendarView } from "@/components/calendar/DayCalendarView";
 import { MonthCalendarView } from "@/components/calendar/MonthCalendarView";
 import { WeekCalendarPanel } from "@/components/calendar/WeekCalendarPanel";
+import type { CalendarCategoryFilterOption } from "@/components/calendar/CategoryFilterControl";
 import { NewReservationModal } from "@/components/modals/NewReservationModal";
 import { ReservationDetailModal } from "@/components/modals/ReservationDetailModal";
 import { useReservationsRealtime } from "@/hooks/useReservationsRealtime";
@@ -101,6 +102,15 @@ export function CalendarView({
       })),
     [categoryRows],
   );
+  const categoryFilterOptions = useMemo<CalendarCategoryFilterOption[]>(
+    () =>
+      sortReservationCategories(categoryRows).map((r) => ({
+        id: r.id,
+        label: r.label,
+      })),
+    [categoryRows],
+  );
+  const [categoryFilterIds, setCategoryFilterIds] = useState<string[]>([]);
 
   const anchorDate = useMemo(() => {
     const d = new Date(initialDate);
@@ -143,6 +153,23 @@ export function CalendarView({
     () => reservationRows.map(mapReservationWithTableToCalendar),
     [reservationRows],
   );
+  const filteredReservations = useMemo(() => {
+    if (categoryFilterIds.length === 0) return reservations;
+    const selected = new Set(categoryFilterIds);
+    return reservations.filter((r) => selected.has(r.categoryId));
+  }, [reservations, categoryFilterIds]);
+
+  const toggleCategoryFilter = useCallback((categoryId: string) => {
+    setCategoryFilterIds((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId],
+    );
+  }, []);
+
+  const clearCategoryFilter = useCallback(() => {
+    setCategoryFilterIds([]);
+  }, []);
 
   const selectedReservation = useMemo(() => {
     if (!selectedReservationId) return null;
@@ -167,8 +194,9 @@ export function CalendarView({
   );
 
   const blocksByDayIndex = useMemo(
-    () => weekDays.map((day) => computeWeekOverlapLayouts(reservations, day)),
-    [weekDays, reservations],
+    () =>
+      weekDays.map((day) => computeWeekOverlapLayouts(filteredReservations, day)),
+    [weekDays, filteredReservations],
   );
 
   const openHeaderNew = () => {
@@ -252,6 +280,10 @@ export function CalendarView({
           activeView={view}
           staffName={staffName}
           staffIsOwner={staffIsOwner}
+          categoryFilterOptions={categoryFilterOptions}
+          categoryFilterIds={categoryFilterIds}
+          onToggleCategoryFilter={toggleCategoryFilter}
+          onClearCategoryFilter={clearCategoryFilter}
           onPrevWeek={goPrevWeek}
           onNextWeek={goNextWeek}
           onThisWeek={goThisWeek}
@@ -272,8 +304,12 @@ export function CalendarView({
           activeView={view}
           staffName={staffName}
           staffIsOwner={staffIsOwner}
+          categoryFilterOptions={categoryFilterOptions}
+          categoryFilterIds={categoryFilterIds}
+          onToggleCategoryFilter={toggleCategoryFilter}
+          onClearCategoryFilter={clearCategoryFilter}
           summaryCategories={daySummaryCategories}
-          reservations={reservations}
+          reservations={filteredReservations}
           onPrevDay={() =>
             pushCalendar(startOfLocalDay(addDays(daySelected, -1)), "day")
           }
@@ -297,10 +333,15 @@ export function CalendarView({
           activeView={view}
           staffName={staffName}
           staffIsOwner={staffIsOwner}
-          reservations={reservations}
+          categoryFilterOptions={categoryFilterOptions}
+          categoryFilterIds={categoryFilterIds}
+          onToggleCategoryFilter={toggleCategoryFilter}
+          onClearCategoryFilter={clearCategoryFilter}
+          reservations={filteredReservations}
           onPrevMonth={goPrevMonth}
           onNextMonth={goNextMonth}
           onOpenHeaderNew={openHeaderNew}
+          onToday={() => pushCalendar(startOfLocalDay(new Date()), "month")}
           onSelectViewDay={onSelectViewDay}
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}

@@ -3,6 +3,10 @@
 import { useMemo } from "react";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
+  CategoryFilterControl,
+  type CalendarCategoryFilterOption,
+} from "@/components/calendar/CategoryFilterControl";
+import {
   calPageShell,
   calScrollX,
   calTimeGutter,
@@ -101,6 +105,10 @@ export type DayCalendarViewProps = {
   activeView: CalendarViewMode;
   staffName: string;
   staffIsOwner: boolean;
+  categoryFilterOptions: CalendarCategoryFilterOption[];
+  categoryFilterIds: string[];
+  onToggleCategoryFilter: (categoryId: string) => void;
+  onClearCategoryFilter: () => void;
   summaryCategories: DaySummaryCategory[];
   reservations: Reservation[];
   onPrevDay: () => void;
@@ -120,6 +128,10 @@ export function DayCalendarView({
   activeView,
   staffName,
   staffIsOwner,
+  categoryFilterOptions,
+  categoryFilterIds,
+  onToggleCategoryFilter,
+  onClearCategoryFilter,
   summaryCategories,
   reservations,
   onPrevDay,
@@ -217,6 +229,12 @@ export function DayCalendarView({
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <CategoryFilterControl
+            options={categoryFilterOptions}
+            selectedIds={categoryFilterIds}
+            onToggle={onToggleCategoryFilter}
+            onClear={onClearCategoryFilter}
+          />
           <nav
             className="flex items-center gap-1"
             aria-label="カレンダー表示切り替え"
