@@ -168,6 +168,7 @@ export type Database = {
           id: string
           login_id: string
           name: string
+          notification_email: string | null
           role: Database["public"]["Enums"]["staff_role"]
           user_id: string
         }
@@ -176,6 +177,7 @@ export type Database = {
           id?: string
           login_id: string
           name: string
+          notification_email?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
           user_id: string
         }
@@ -184,6 +186,7 @@ export type Database = {
           id?: string
           login_id?: string
           name?: string
+          notification_email?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
           user_id?: string
         }

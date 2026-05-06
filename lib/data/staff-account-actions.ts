@@ -26,18 +26,40 @@ const passwordSchema = z.string().min(8, 'パスワードは8文字以上です'
 
 const staffRoleSchema = z.enum(['owner', 'manager', 'staff'])
 
-const createSchema = z.object({
-  login_id: loginIdSchema,
-  password: passwordSchema,
-  name: z.string().trim().min(1, '名前を入力してください').max(100),
-  role: staffRoleSchema,
-})
+const createSchema = z
+  .object({
+    login_id: loginIdSchema,
+    password: passwordSchema,
+    name: z.string().trim().min(1, '名前を入力してください').max(100),
+    role: staffRoleSchema,
+    notification_email: z.string().trim().max(320).optional(),
+  })
+  .superRefine((d, ctx) => {
+    if (d.role !== 'owner') return
+    const e = d.notification_email?.trim()
+    if (!e) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'オーナーには通知メールアドレスが必須です',
+        path: ['notification_email'],
+      })
+      return
+    }
+    if (!z.string().email().safeParse(e).success) {
+      ctx.addIssue({
+        code: 'custom',
+        message: '通知メールの形式が不正です',
+        path: ['notification_email'],
+      })
+    }
+  })
 
 const updateSchema = z.object({
   staffId: z.string().uuid(),
   login_id: loginIdSchema.optional(),
   name: z.string().trim().min(1, '名前を入力してください').max(100).optional(),
   role: staffRoleSchema.optional(),
+  notification_email: z.string().trim().max(320).optional(),
   newPassword: passwordSchema.optional().or(z.literal('')),
 })
 
@@ -68,7 +90,7 @@ export async function createStaffAccount(
     return err(first)
   }
 
-  const { login_id, password, name, role } = parsed.data
+  const { login_id, password, name, role, notification_email } = parsed.data
   const email = loginIdToAuthEmail(login_id)
 
   let admin
@@ -101,6 +123,8 @@ export async function createStaffAccount(
       login_id,
       name,
       role,
+      notification_email:
+        role === 'owner' ? notification_email!.trim() : null,
     })
     .select('id, login_id')
     .single()
@@ -134,12 +158,19 @@ export async function updateStaffAccount(
     return err(first)
   }
 
-  const { staffId, login_id: nextLoginId, name, role, newPassword } = parsed.data
+  const {
+    staffId,
+    login_id: nextLoginId,
+    name,
+    role,
+    notification_email: nextNotificationRaw,
+    newPassword,
+  } = parsed.data
 
   const supabase = await createClient()
   const { data: target, error: fetchErr } = await supabase
     .from('staff')
-    .select('id, user_id, login_id, role')
+    .select('id, user_id, login_id, role, notification_email')
     .eq('id', staffId)
     .maybeSingle()
 
@@ -165,6 +196,25 @@ export async function updateStaffAccount(
         return err('少なくとも1名のオーナーが必要です')
       }
     }
+  }
+
+  const nextRole = role ?? target.role
+
+  let resolvedNotificationEmail: string | null
+  if (nextRole === 'owner') {
+    if (nextNotificationRaw !== undefined) {
+      resolvedNotificationEmail = nextNotificationRaw.trim()
+    } else {
+      resolvedNotificationEmail = (target.notification_email ?? '').trim() || null
+    }
+    if (!resolvedNotificationEmail) {
+      return err('オーナーには通知メールアドレスが必須です')
+    }
+    if (!z.string().email().safeParse(resolvedNotificationEmail).success) {
+      return err('通知メールの形式が不正です')
+    }
+  } else {
+    resolvedNotificationEmail = null
   }
 
   let admin: ReturnType<typeof createAdminClient> | undefined
@@ -202,11 +252,25 @@ export async function updateStaffAccount(
     if (pwErr) return err(pwErr.message)
   }
 
-  const patch: { login_id?: string; name?: string; role?: 'owner' | 'manager' | 'staff' } =
-    {}
+  const patch: {
+    login_id?: string
+    name?: string
+    role?: 'owner' | 'manager' | 'staff'
+    notification_email?: string | null
+  } = {}
   if (nextLoginId !== undefined) patch.login_id = nextLoginId
   if (name !== undefined) patch.name = name
   if (role !== undefined) patch.role = role
+
+  const notificationNeedsRowUpdate =
+    nextRole === 'owner' ||
+    target.notification_email !== null ||
+    role !== undefined
+
+  if (notificationNeedsRowUpdate) {
+    patch.notification_email =
+      nextRole === 'owner' ? resolvedNotificationEmail : null
+  }
 
   if (Object.keys(patch).length > 0) {
     const { error: upRow } = await supabase.from('staff').update(patch).eq('id', staffId)

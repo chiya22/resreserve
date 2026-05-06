@@ -3,6 +3,15 @@
 import { useMemo } from "react";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
+  calPageShell,
+  calScrollX,
+  calTimeGutter,
+  calTouchAccentSm,
+  calTouchNavArrow,
+  calTouchOutlineSm,
+  calViewSegBtn,
+} from "@/lib/calendar/calendar-toolbar-classes";
+import {
   computeDayOverlapLayouts,
   type DayOverlapLayout,
   DAY_HOUR_END,
@@ -19,7 +28,6 @@ import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
 import { isSameLocalDay, weekdayLabelJa } from "@/lib/calendar/week";
 
-const TIME_GUTTER_PX = 52;
 const HOUR_COUNT = DAY_HOUR_END - DAY_HOUR_START;
 const GRID_BODY_PX = HOUR_COUNT * DAY_PX_PER_HOUR;
 const HOUR_ROWS = Array.from(
@@ -48,7 +56,7 @@ function DayReservationBlock({
 
   return (
     <div
-      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
+      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer touch-manipulation rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
       style={{ top, height }}
       role="button"
       tabIndex={0}
@@ -163,25 +171,27 @@ export function DayCalendarView({
   const wd = weekdayLabelJa(daySelected);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col gap-4 px-6 py-4">
+    <div className={calPageShell}>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={onPrevDay}
             aria-label="前の日"
-            className="active:scale-[0.97] rounded-lg border-[0.5px] border-border bg-bg-primary px-2.5 py-1.5 text-text-secondary transition-transform duration-100 hover:bg-bg-hover"
+            className={calTouchNavArrow}
           >
             ◀
           </button>
           <div className="flex min-w-0 flex-wrap items-center justify-center gap-0.5 text-center text-[17px] font-medium leading-none text-text-primary">
             <span>{y}年{mo}月</span>
             {isTitleToday ? (
-              <span className="mx-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
+              <span className="mx-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
                 {daySelected.getDate()}
               </span>
             ) : (
-              <span className="mx-0.5 shrink-0">{daySelected.getDate()}</span>
+              <span className="mx-0.5 flex min-h-9 min-w-9 shrink-0 items-center justify-center">
+                {daySelected.getDate()}
+              </span>
             )}
             <span>
               日（{wd}）
@@ -191,21 +201,17 @@ export function DayCalendarView({
             type="button"
             onClick={onNextDay}
             aria-label="次の日"
-            className="active:scale-[0.97] rounded-lg border-[0.5px] border-border bg-bg-primary px-2.5 py-1.5 text-text-secondary transition-transform duration-100 hover:bg-bg-hover"
+            className={calTouchNavArrow}
           >
             ▶
           </button>
-          <button
-            type="button"
-            onClick={onToday}
-            className="active:scale-[0.97] rounded-md border-[0.5px] border-border px-[10px] py-1 text-xs text-text-secondary transition-transform duration-100 hover:bg-bg-hover"
-          >
+          <button type="button" onClick={onToday} className={calTouchOutlineSm}>
             今日
           </button>
           <button
             type="button"
             onClick={onOpenHeaderNew}
-            className="active:scale-[0.97] rounded-md border-[0.5px] border-border bg-bg-primary px-[10px] py-1 text-xs font-medium text-accent transition-transform duration-100 hover:bg-bg-hover"
+            className={calTouchAccentSm}
           >
             ＋ 新規予約
           </button>
@@ -218,33 +224,21 @@ export function DayCalendarView({
             <button
               type="button"
               onClick={onSelectViewDay}
-              className={
-                activeView === "day"
-                  ? "rounded-md border-[0.5px] border-border bg-bg-hover px-[10px] py-1 text-xs text-text-primary"
-                  : "rounded-md border-[0.5px] border-transparent px-[10px] py-1 text-xs text-text-secondary hover:bg-bg-hover"
-              }
+              className={calViewSegBtn(activeView === "day")}
             >
               日
             </button>
             <button
               type="button"
               onClick={onSelectViewWeek}
-              className={
-                activeView === "week"
-                  ? "rounded-md border-[0.5px] border-border bg-bg-hover px-[10px] py-1 text-xs text-text-primary"
-                  : "rounded-md border-[0.5px] border-transparent px-[10px] py-1 text-xs text-text-secondary hover:bg-bg-hover"
-              }
+              className={calViewSegBtn(activeView === "week")}
             >
               週
             </button>
             <button
               type="button"
               onClick={onSelectViewMonth}
-              className={
-                activeView === "month"
-                  ? "rounded-md border-[0.5px] border-border bg-bg-hover px-[10px] py-1 text-xs text-text-primary"
-                  : "rounded-md border-[0.5px] border-transparent px-[10px] py-1 text-xs text-text-secondary hover:bg-bg-hover"
-              }
+              className={calViewSegBtn(activeView === "month")}
             >
               月
             </button>
@@ -253,13 +247,13 @@ export function DayCalendarView({
         </div>
       </header>
 
-      <div className="min-w-0 flex-1 overflow-x-auto">
-        <div className="min-w-[320px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
+      <div className={calScrollX}>
+        <div className="min-w-[320px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary md:min-w-[400px]">
           <div
-            className="flex flex-wrap items-center gap-2 border-b-[0.5px] border-border py-2 pl-[52px] pr-0"
+            className="flex flex-wrap items-center gap-2 border-b-[0.5px] border-border py-2 pl-[52px] pr-2 md:pl-14"
             aria-label="当日サマリー"
           >
-            <span className="rounded-xl border-[0.5px] border-border bg-bg-hover px-[10px] py-[3px] text-[11px] font-medium text-text-primary">
+            <span className="inline-flex min-h-9 items-center rounded-xl border-[0.5px] border-border bg-bg-hover px-3 py-1.5 text-[11px] font-medium text-text-primary">
               本日 {stats.count}件 / {stats.guests}名
             </span>
             {summaryCategories.map((cat) => {
@@ -269,7 +263,7 @@ export function DayCalendarView({
               return (
                 <span
                   key={cat.id}
-                  className={`rounded-xl border-[0.5px] border-transparent px-[10px] py-[3px] text-[11px] font-medium ${RESERVATION_TONE_CLASS[pk]}`}
+                  className={`inline-flex min-h-9 items-center rounded-xl border-[0.5px] border-transparent px-3 py-1.5 text-[11px] font-medium ${RESERVATION_TONE_CLASS[pk]}`}
                 >
                   {cat.label} {n}件
                 </span>
@@ -278,10 +272,7 @@ export function DayCalendarView({
           </div>
 
           <div className="flex">
-            <div
-              className="shrink-0 border-r-[0.5px] border-border bg-bg-primary"
-              style={{ width: TIME_GUTTER_PX }}
-            >
+            <div className={`${calTimeGutter} border-r-[0.5px] border-border bg-bg-primary`}>
               {HOUR_ROWS.map((h) => (
                 <div
                   key={h}
@@ -313,7 +304,7 @@ export function DayCalendarView({
                 type="button"
                 tabIndex={-1}
                 aria-label="空きスロットから予約を作成"
-                className="absolute inset-0 z-[1] cursor-default border-0 bg-transparent p-0 outline-none"
+                className="absolute inset-0 z-[1] cursor-default touch-manipulation border-0 bg-transparent p-0 outline-none"
                 onClick={(e) => {
                   e.stopPropagation();
                   onSlotClick(e.nativeEvent.offsetY);

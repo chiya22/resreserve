@@ -11,8 +11,19 @@ import {
   rowToInput,
   type ReservationInput,
 } from "@/lib/data/reservation-shared";
+import {
+  notifyReservationCancelled,
+  notifyReservationCreated,
+  notifyReservationUpdated,
+} from "@/lib/email/send-reservation-owner-notification";
 import { err, ok, type Result } from "@/types/result";
 import type { ReservationUpdate, ReservationWithTable } from "@/types";
+
+function queueOwnerNotify(p: Promise<void>): void {
+  void p.catch((e) =>
+    console.error("オーナー向け予約通知メール送信でエラー:", e),
+  );
+}
 
 export type { ReservationInput } from "@/lib/data/reservation-shared";
 
@@ -62,7 +73,9 @@ export async function createReservation(
   }
 
   revalidatePath("/calendar");
-  return ok(data as ReservationWithTable);
+  const typed = data as ReservationWithTable;
+  queueOwnerNotify(notifyReservationCreated(typed));
+  return ok(typed);
 }
 
 export async function updateReservation(
@@ -143,13 +156,30 @@ export async function updateReservation(
   }
 
   revalidatePath("/calendar");
-  return ok(data as ReservationWithTable);
+  const typed = data as ReservationWithTable;
+  queueOwnerNotify(notifyReservationUpdated(row, typed));
+  return ok(typed);
 }
 
 export async function cancelReservation(
   id: string,
 ): Promise<Result<void, string>> {
   const supabase = await createClient();
+
+  const snapshot = await supabase
+    .from("reservations")
+    .select(reservationSelectWithTable)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (snapshot.error || !snapshot.data) {
+    if (snapshot.error) {
+      console.error("cancelReservation snapshot failed:", snapshot.error);
+    }
+    return err("予約が見つかりません");
+  }
+
+  const before = snapshot.data as ReservationWithTable;
 
   const { error } = await supabase
     .from("reservations")
@@ -162,5 +192,6 @@ export async function cancelReservation(
   }
 
   revalidatePath("/calendar");
+  queueOwnerNotify(notifyReservationCancelled(before));
   return ok(undefined);
 }

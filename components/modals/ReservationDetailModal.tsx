@@ -151,9 +151,9 @@ export function ReservationDetailModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] backdrop-blur-[2px] sm:items-center sm:pb-4 sm:pt-4">
       <div
-        className="relative w-full max-w-[440px] overflow-hidden rounded-xl border-[0.5px] border-border bg-bg-primary shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        className="relative max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom)-2rem))] w-full max-w-[440px] overflow-y-auto overscroll-contain rounded-xl border-[0.5px] border-border bg-bg-primary shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="detail-reservation-title"
@@ -168,7 +168,7 @@ export function ReservationDetailModal({
           <button
             type="button"
             aria-label="閉じる"
-            className="rounded-md px-2 py-1 text-sm text-text-secondary hover:bg-bg-hover"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
             onClick={onClose}
           >
             ✕
@@ -185,14 +185,14 @@ export function ReservationDetailModal({
                 {error}
               </p>
             ) : null}
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 onClick={() => {
                   setMode("view");
                   setError(null);
                 }}
-                className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:bg-bg-hover"
+                className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
               >
                 戻る
               </button>
@@ -200,7 +200,7 @@ export function ReservationDetailModal({
                 type="button"
                 disabled={isPending}
                 onClick={handleCancelReservation}
-                className="rounded-lg border border-reservation-waitlist-border bg-reservation-waitlist-bg px-4 py-2 text-sm text-reservation-waitlist-text hover:opacity-90 disabled:opacity-50"
+                className="inline-flex min-h-11 min-w-[7rem] items-center justify-center rounded-lg border border-reservation-waitlist-border bg-reservation-waitlist-bg px-4 py-2.5 text-sm text-reservation-waitlist-text hover:opacity-90 disabled:opacity-50 touch-manipulation active:scale-[0.97]"
               >
                 {isPending ? "処理中…" : "キャンセルする"}
               </button>
@@ -304,7 +304,7 @@ export function ReservationDetailModal({
                   {categoryChoices.map((c) => (
                     <label
                       key={c.value}
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-xs has-[:checked]:border-accent"
+                      className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-xs has-[:checked]:border-accent"
                     >
                       <input
                         type="radio"
@@ -333,18 +333,18 @@ export function ReservationDetailModal({
                 {error}
               </p>
             ) : null}
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setMode("view")}
-                className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:bg-bg-hover"
+                className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
               >
                 戻る
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="rounded-lg bg-accent px-4 py-2 text-sm text-white hover:bg-[#3B7DE8] disabled:opacity-50"
+                className="inline-flex min-h-11 min-w-[5rem] items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm text-white hover:bg-[#3B7DE8] disabled:opacity-50 touch-manipulation active:scale-[0.97]"
               >
                 {isPending ? "保存中…" : "保存"}
               </button>
@@ -393,14 +393,14 @@ export function ReservationDetailModal({
               <button
                 type="button"
                 onClick={() => setMode("confirm-delete")}
-                className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary hover:bg-bg-hover"
+                className="inline-flex min-h-11 min-w-[5.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
               >
                 キャンセル
               </button>
               <button
                 type="button"
                 onClick={() => setMode("edit")}
-                className="rounded-lg bg-bg-hover px-4 py-2 text-sm text-text-primary hover:opacity-90"
+                className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-lg bg-bg-hover px-4 py-2.5 text-sm text-text-primary hover:opacity-90 touch-manipulation active:scale-[0.97]"
               >
                 編集
               </button>

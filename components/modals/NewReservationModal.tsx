@@ -114,9 +114,9 @@ export function NewReservationModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] backdrop-blur-[2px] sm:items-center sm:pb-4 sm:pt-4">
       <div
-        className="w-full max-w-[480px] rounded-xl border-[0.5px] border-border bg-bg-primary p-6 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        className="max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom)-2rem))] w-full max-w-[480px] overflow-y-auto overscroll-contain rounded-xl border-[0.5px] border-border bg-bg-primary p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-reservation-title"
@@ -249,7 +249,7 @@ export function NewReservationModal({
                 {bookingCategoryOptions.map((c) => (
                   <label
                     key={c.value}
-                    className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-xs has-[:checked]:border-accent has-[:checked]:bg-bg-hover"
+                    className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-xs has-[:checked]:border-accent has-[:checked]:bg-bg-hover"
                   >
                     <input
                       type="radio"
@@ -287,18 +287,18 @@ export function NewReservationModal({
             </p>
           ) : null}
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-wrap justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-border px-4 py-2 text-sm text-text-secondary transition-colors hover:bg-bg-hover"
+              className="inline-flex min-h-11 min-w-[5.5rem] items-center justify-center rounded-lg border border-border px-5 py-2.5 text-sm text-text-secondary transition-colors hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={isPending || bookingCategoryOptions.length === 0}
-              className="rounded-lg bg-accent px-5 py-2 text-[13px] text-white transition-colors hover:bg-[#3B7DE8] disabled:opacity-50"
+              className="inline-flex min-h-11 min-w-[7rem] items-center justify-center rounded-lg bg-accent px-5 py-2.5 text-[13px] text-white transition-colors hover:bg-[#3B7DE8] disabled:opacity-50 touch-manipulation active:scale-[0.97]"
             >
               {isPending ? "作成中…" : "予約を作成"}
             </button>

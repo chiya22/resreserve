@@ -16,7 +16,11 @@ import {
 import { HOUR_END } from "@/lib/calendar/calendar-constants";
 import { mapReservationWithTableToCalendar } from "@/lib/calendar/map-supabase-reservation";
 import type { Reservation } from "@/lib/calendar/types";
-import { computeWeekOverlapLayouts } from "@/lib/calendar/day-layout";
+import {
+  computeWeekOverlapLayouts,
+  DAY_PX_PER_HOUR,
+  WEEK_PX_PER_HOUR,
+} from "@/lib/calendar/day-layout";
 import {
   addMinutes,
   defaultNewReservationRangeForDay,
@@ -256,7 +260,9 @@ export function CalendarView({
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}
           onDayHeaderClick={onDayHeaderClick}
-          onSlotClick={(d, y) => openSlotNewInternal(d, y, 48)}
+          onSlotClick={(d, y) =>
+            openSlotNewInternal(d, y, WEEK_PX_PER_HOUR)
+          }
           onReservationClick={handleReservationClick}
         />
       ) : view === "day" ? (
@@ -279,7 +285,9 @@ export function CalendarView({
           onSelectViewDay={onSelectViewDay}
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}
-          onSlotClick={(y) => openSlotNewInternal(daySelected, y, 60)}
+          onSlotClick={(y) =>
+            openSlotNewInternal(daySelected, y, DAY_PX_PER_HOUR)
+          }
           onReservationClick={handleReservationClick}
         />
       ) : (

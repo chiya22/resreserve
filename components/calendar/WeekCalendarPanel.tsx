@@ -1,10 +1,19 @@
 "use client";
 
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
-import type { DayOverlapLayout } from "@/lib/calendar/day-layout";
+import {
+  calPageShell,
+  calScrollX,
+  calTimeGutter,
+  calTouchAccentSm,
+  calTouchNavArrow,
+  calTouchOutlineSm,
+  calViewSegBtn,
+} from "@/lib/calendar/calendar-toolbar-classes";
+import { type DayOverlapLayout, WEEK_PX_PER_HOUR } from "@/lib/calendar/day-layout";
 import { formatHmRange } from "@/lib/calendar/datetime-ui";
-import type { Reservation } from "@/lib/calendar/types";
 import { RESERVATION_BLOCK_CLASS } from "@/lib/calendar/reservation-palette-classes";
+import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
 import { isSameLocalDay, weekdayLabelJa } from "@/lib/calendar/week";
 
@@ -18,9 +27,8 @@ function groupByLane(layouts: DayOverlapLayout[]): DayOverlapLayout[][] {
   return cols;
 }
 
-const TIME_GUTTER_PX = 52;
-const HEADER_HEIGHT_PX = 56;
-const PX_PER_HOUR = 48;
+const HEADER_HEIGHT_PX = 64;
+const PX_PER_HOUR = WEEK_PX_PER_HOUR;
 const HOUR_START = 11;
 const HOUR_END = 22;
 const HOUR_COUNT = HOUR_END - HOUR_START;
@@ -42,7 +50,7 @@ function WeekReservationBlock({
 }) {
   return (
     <div
-      className={`pointer-events-auto absolute inset-x-[2px] z-[5] cursor-pointer rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[6px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
+      className={`pointer-events-auto absolute inset-x-[2px] z-[5] cursor-pointer touch-manipulation rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[6px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
       style={{
         top: layout.top,
         height: layout.height,
@@ -115,14 +123,14 @@ export function WeekCalendarPanel({
   onReservationClick,
 }: WeekCalendarPanelProps) {
   return (
-    <div className="flex min-h-full flex-1 flex-col gap-4 px-6 py-4">
+    <div className={calPageShell}>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={onPrevWeek}
             aria-label="前の週"
-            className="active:scale-[0.97] rounded-lg border-[0.5px] border-border bg-bg-primary px-2.5 py-1.5 text-text-secondary transition-transform duration-100 hover:bg-bg-hover"
+            className={calTouchNavArrow}
           >
             ◀
           </button>
@@ -133,21 +141,21 @@ export function WeekCalendarPanel({
             type="button"
             onClick={onNextWeek}
             aria-label="次の週"
-            className="active:scale-[0.97] rounded-lg border-[0.5px] border-border bg-bg-primary px-2.5 py-1.5 text-text-secondary transition-transform duration-100 hover:bg-bg-hover"
+            className={calTouchNavArrow}
           >
             ▶
           </button>
           <button
             type="button"
             onClick={onThisWeek}
-            className="active:scale-[0.97] rounded-md border-[0.5px] border-border px-[10px] py-1 text-xs text-text-secondary transition-transform duration-100 hover:bg-bg-hover"
+            className={calTouchOutlineSm}
           >
             今日
           </button>
           <button
             type="button"
             onClick={onOpenHeaderNew}
-            className="active:scale-[0.97] rounded-md border-[0.5px] border-border bg-bg-primary px-[10px] py-1 text-xs font-medium text-accent transition-transform duration-100 hover:bg-bg-hover"
+            className={calTouchAccentSm}
           >
             ＋ 新規予約
           </button>
@@ -160,33 +168,21 @@ export function WeekCalendarPanel({
             <button
               type="button"
               onClick={onSelectViewDay}
-              className={
-                activeView === "day"
-                  ? "rounded-md border-[0.5px] border-border bg-bg-hover px-[10px] py-1 text-xs text-text-primary"
-                  : "rounded-md border-[0.5px] border-transparent px-[10px] py-1 text-xs text-text-secondary hover:bg-bg-hover"
-              }
+              className={calViewSegBtn(activeView === "day")}
             >
               日
             </button>
             <button
               type="button"
               onClick={onSelectViewWeek}
-              className={
-                activeView === "week"
-                  ? "rounded-md border-[0.5px] border-border bg-bg-hover px-[10px] py-1 text-xs text-text-primary"
-                  : "rounded-md border-[0.5px] border-transparent px-[10px] py-1 text-xs text-text-secondary hover:bg-bg-hover"
-              }
+              className={calViewSegBtn(activeView === "week")}
             >
               週
             </button>
             <button
               type="button"
               onClick={onSelectViewMonth}
-              className={
-                activeView === "month"
-                  ? "rounded-md border-[0.5px] border-border bg-bg-hover px-[10px] py-1 text-xs text-text-primary"
-                  : "rounded-md border-[0.5px] border-transparent px-[10px] py-1 text-xs text-text-secondary hover:bg-bg-hover"
-              }
+              className={calViewSegBtn(activeView === "month")}
             >
               月
             </button>
@@ -195,12 +191,11 @@ export function WeekCalendarPanel({
         </div>
       </header>
 
-      <div className="min-w-0 flex-1 overflow-x-auto">
-        <div className="min-w-[720px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
+      <div className={calScrollX}>
+        <div className="min-w-[720px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary md:min-w-[820px] lg:min-w-[920px]">
           <div className="flex" style={{ height: HEADER_HEIGHT_PX }}>
             <div
-              className="shrink-0 border-b-[0.5px] border-border bg-bg-primary"
-              style={{ width: TIME_GUTTER_PX }}
+              className={`${calTimeGutter} border-b-[0.5px] border-border bg-bg-primary`}
             />
             <div className="grid min-w-0 flex-1 grid-cols-7">
               {weekDays.map((d) => {
@@ -210,17 +205,17 @@ export function WeekCalendarPanel({
                     key={d.toISOString()}
                     type="button"
                     onClick={() => onDayHeaderClick(d)}
-                    className="flex flex-col items-center justify-center gap-0.5 border-b-[0.5px] border-l-[0.5px] border-border bg-bg-primary"
+                    className="flex min-h-[3.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 border-b-[0.5px] border-l-[0.5px] border-border bg-bg-primary py-1"
                   >
                     <span className="text-[11px] leading-none text-text-tertiary">
                       {weekdayLabelJa(d)}
                     </span>
                     {isToday ? (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-medium leading-none text-white">
+                      <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full bg-accent text-xs font-medium leading-none text-white">
                         {d.getDate()}
                       </span>
                     ) : (
-                      <span className="text-xs font-medium leading-none text-text-primary">
+                      <span className="flex min-h-9 min-w-9 items-center justify-center text-xs font-medium leading-none text-text-primary">
                         {d.getDate()}
                       </span>
                     )}
@@ -231,10 +226,7 @@ export function WeekCalendarPanel({
           </div>
 
           <div className="flex">
-            <div
-              className="shrink-0 border-r-[0.5px] border-border bg-bg-primary"
-              style={{ width: TIME_GUTTER_PX }}
-            >
+            <div className={`${calTimeGutter} border-r-[0.5px] border-border bg-bg-primary`}>
               {HOUR_ROWS.map((h) => (
                 <div
                   key={h}
@@ -274,7 +266,7 @@ export function WeekCalendarPanel({
                       type="button"
                       tabIndex={-1}
                       aria-label="空きスロットから予約を作成"
-                      className="absolute inset-0 z-[1] cursor-default border-0 bg-transparent p-0 outline-none"
+                      className="absolute inset-0 z-[1] cursor-default touch-manipulation border-0 bg-transparent p-0 outline-none"
                       onClick={(e) => {
                         e.stopPropagation();
                         onSlotClick(d, e.nativeEvent.offsetY);

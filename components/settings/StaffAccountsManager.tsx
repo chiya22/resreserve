@@ -30,6 +30,7 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
   const [cPass, setCPass] = useState('')
   const [cName, setCName] = useState('')
   const [cRole, setCRole] = useState<StaffRole>('staff')
+  const [cNotifyEmail, setCNotifyEmail] = useState('')
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
@@ -40,6 +41,8 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
       password: cPass,
       name: cName,
       role: cRole,
+      notification_email:
+        cRole === 'owner' ? cNotifyEmail.trim() : undefined,
     })
     setPendingId(null)
     if (!r.success) {
@@ -50,6 +53,7 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
     setCPass('')
     setCName('')
     setCRole('staff')
+    setCNotifyEmail('')
     router.refresh()
   }
 
@@ -71,7 +75,7 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
       <section className="rounded-xl border border-border bg-bg-primary p-6 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
         <h2 className="text-sm font-medium text-text-primary">アカウントを作成</h2>
         <p className="mt-1 text-xs text-text-secondary">
-          パスワードは作成時に設定し、利用者に伝えてください。
+          パスワードは作成時に設定し、利用者に伝えてください。オーナーには予約の追加・変更・キャンセル時の通知メール先を必ず登録します（複数オーナーがいれば全員に送信されます）。
         </p>
 
         <form onSubmit={handleCreate} className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -120,6 +124,22 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
               ))}
             </select>
           </label>
+          {cRole === 'owner' ? (
+            <label className="block sm:col-span-2">
+              <span className="mb-1 block text-xs text-text-tertiary">
+                オーナー向け通知メール（必須）
+              </span>
+              <input
+                type="email"
+                value={cNotifyEmail}
+                onChange={(ev) => setCNotifyEmail(ev.target.value)}
+                placeholder="booking@yourdomain.jp"
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
+                required={cRole === 'owner'}
+                autoComplete="email"
+              />
+            </label>
+          ) : null}
           <div className="sm:col-span-2">
             <button
               type="submit"
@@ -146,6 +166,7 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
                 <th className="px-3 py-2 font-normal">アカウント</th>
                 <th className="px-3 py-2 font-normal">表示名</th>
                 <th className="px-3 py-2 font-normal">権限</th>
+                <th className="px-3 py-2 font-normal max-w-[200px]">通知メール</th>
                 <th className="px-3 py-2 font-normal" />
               </tr>
             </thead>
@@ -191,6 +212,9 @@ function StaffRowEditor({
   const [loginId, setLoginId] = useState(row.login_id)
   const [name, setName] = useState(row.name)
   const [role, setRole] = useState<StaffRole>(row.role)
+  const [notificationEmail, setNotificationEmail] = useState(
+    row.notification_email ?? '',
+  )
   const [newPassword, setNewPassword] = useState('')
 
   const isSelf = row.user_id === currentUserId
@@ -205,6 +229,8 @@ function StaffRowEditor({
       login_id: loginId !== row.login_id ? loginId : undefined,
       name: name !== row.name ? name : undefined,
       role: role !== row.role ? role : undefined,
+      notification_email:
+        role === 'owner' ? notificationEmail.trim() : undefined,
       newPassword: newPassword.trim() ? newPassword : undefined,
     })
     setPendingId(null)
@@ -225,6 +251,19 @@ function StaffRowEditor({
         <td className="px-3 py-2 text-text-secondary">
           {ROLES.find((r) => r.value === row.role)?.label ?? row.role}
         </td>
+        <td className="max-w-[200px] truncate px-3 py-2 text-text-secondary">
+          {row.role === 'owner' ? (
+            row.notification_email?.trim() ? (
+              <span title={row.notification_email}>{row.notification_email}</span>
+            ) : (
+              <span className="text-reservation-waitlist-text">
+                未設定（編集してください）
+              </span>
+            )
+          ) : (
+            '—'
+          )}
+        </td>
         <td className="px-3 py-2 text-right">
           <button
             type="button"
@@ -232,6 +271,7 @@ function StaffRowEditor({
               setLoginId(row.login_id)
               setName(row.name)
               setRole(row.role)
+              setNotificationEmail(row.notification_email ?? '')
               setNewPassword('')
               setErr(null)
               setEditing(true)
@@ -255,7 +295,7 @@ function StaffRowEditor({
 
   return (
     <tr className="border-b border-border bg-bg-surface last:border-b-0">
-      <td colSpan={4} className="p-3">
+      <td colSpan={5} className="p-3">
         <form onSubmit={handleSave} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="block">
@@ -297,6 +337,21 @@ function StaffRowEditor({
               ) : null}
             </label>
           </div>
+          {role === 'owner' ? (
+            <label className="block max-w-lg">
+              <span className="mb-1 block text-[11px] text-text-tertiary">
+                オーナー向け通知メール（必須・予約の追加・変更・キャンセル通知）
+              </span>
+              <input
+                type="email"
+                value={notificationEmail}
+                onChange={(ev) => setNotificationEmail(ev.target.value)}
+                className="w-full rounded-lg border border-border bg-bg-primary px-2 py-1.5 text-xs outline-none focus:border-accent"
+                required={role === 'owner'}
+                autoComplete="email"
+              />
+            </label>
+          ) : null}
           <label className="block max-w-xs">
             <span className="mb-1 block text-[11px] text-text-tertiary">
               新しいパスワード（空欄なら変更なし）
@@ -327,6 +382,7 @@ function StaffRowEditor({
               onClick={() => {
                 setEditing(false)
                 setErr(null)
+                setNotificationEmail(row.notification_email ?? '')
                 setNewPassword('')
               }}
               className="rounded-lg border border-border px-4 py-1.5 text-xs text-text-secondary hover:bg-bg-hover"

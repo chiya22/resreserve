@@ -22,13 +22,13 @@ export function CalendarToolbarEnd({
         <>
           <Link
             href="/settings/categories"
-            className="rounded-md border border-border px-2.5 py-1 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover"
+            className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-md border border-border px-4 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
           >
             カテゴリ
           </Link>
           <Link
             href="/settings/staff"
-            className="rounded-md border border-border px-2.5 py-1 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover"
+            className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-md border border-border px-4 text-[11px] text-text-secondary transition-colors hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
           >
             アカウント管理
           </Link>
@@ -37,7 +37,7 @@ export function CalendarToolbarEnd({
       <form action={logout}>
         <button
           type="submit"
-          className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary transition-colors hover:bg-bg-hover"
+          className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-lg border border-border px-4 text-xs text-text-secondary transition-colors hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
         >
           ログアウト
         </button>
