@@ -14,7 +14,7 @@ export function CalendarToolbarEnd({
   staffIsOwner = false,
 }: CalendarToolbarEndProps) {
   return (
-    <div className="flex shrink-0 items-center gap-3 border-l border-border pl-3">
+    <div className="hidden shrink-0 items-center gap-3 border-l border-border pl-3 sm:flex">
       {staffName ? (
         <span className="max-w-[160px] truncate text-xs text-text-secondary">{staffName}</span>
       ) : null}

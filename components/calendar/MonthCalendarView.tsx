@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useRef } from "react";
+import { CalendarMobileMenu } from "@/components/calendar/CalendarMobileMenu";
+import { ClosedDayMobileBadge } from "@/components/calendar/ClosedDayMobileBadge";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
   CategoryFilterControl,
@@ -125,8 +127,8 @@ export function MonthCalendarView({
 
   return (
     <div className={calPageShell}>
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <header className="flex flex-col gap-3">
+        <div className="flex min-w-0 items-center justify-center gap-2 sm:justify-start">
           <button
             type="button"
             onClick={onPrevMonth}
@@ -138,7 +140,7 @@ export function MonthCalendarView({
           <button
             type="button"
             onClick={openMonthPicker}
-            className="min-h-11 min-w-[7.5rem] rounded-md px-2 text-center text-[17px] font-medium leading-none text-text-primary hover:bg-bg-hover"
+            className="min-h-11 min-w-0 max-w-full flex-1 rounded-md px-1 text-center text-[17px] font-medium leading-none text-text-primary hover:bg-bg-hover sm:min-w-[7.5rem] sm:flex-none sm:px-2"
             aria-label="年月を選択"
           >
             {monthTitle(monthAnchor)}
@@ -160,56 +162,71 @@ export function MonthCalendarView({
             aria-hidden
             tabIndex={-1}
           />
-          <button type="button" onClick={onToday} className={calTouchOutlineSm}>
-            今日
-          </button>
-          <button
-            type="button"
-            onClick={onOpenHeaderNew}
-            className={calTouchAccentSm}
-          >
-            ＋ 新規予約
-          </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <CategoryFilterControl
-            options={categoryFilterOptions}
-            selectedIds={categoryFilterIds}
-            onToggle={onToggleCategoryFilter}
-            onClear={onClearCategoryFilter}
-          />
-          <nav
-            className="flex items-center gap-1"
-            aria-label="カレンダー表示切り替え"
-          >
-            <button
-              type="button"
-              onClick={onSelectViewDay}
-              className={calViewSegBtn(activeView === "day")}
-            >
-              日
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <button type="button" onClick={onToday} className={calTouchOutlineSm}>
+              今日
             </button>
             <button
               type="button"
-              onClick={onSelectViewWeek}
-              className={calViewSegBtn(activeView === "week")}
+              onClick={onOpenHeaderNew}
+              className={calTouchAccentSm}
             >
-              週
+              <span className="sm:hidden">＋ 新規</span>
+              <span className="hidden sm:inline">＋ 新規予約</span>
             </button>
-            <button
-              type="button"
-              onClick={onSelectViewMonth}
-              className={calViewSegBtn(activeView === "month")}
+            <nav
+              className="flex items-center gap-1"
+              aria-label="カレンダー表示切り替え"
             >
-              月
-            </button>
-          </nav>
-          <CalendarToolbarEnd staffName={staffName} staffIsOwner={staffIsOwner} />
+              <button
+                type="button"
+                onClick={onSelectViewDay}
+                className={calViewSegBtn(activeView === "day")}
+              >
+                日
+              </button>
+              <button
+                type="button"
+                onClick={onSelectViewWeek}
+                className={calViewSegBtn(activeView === "week")}
+              >
+                週
+              </button>
+              <button
+                type="button"
+                onClick={onSelectViewMonth}
+                className={calViewSegBtn(activeView === "month")}
+              >
+                月
+              </button>
+            </nav>
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <CalendarMobileMenu
+              categoryFilterOptions={categoryFilterOptions}
+              categoryFilterIds={categoryFilterIds}
+              onToggleCategoryFilter={onToggleCategoryFilter}
+              onClearCategoryFilter={onClearCategoryFilter}
+              staffName={staffName}
+              staffIsOwner={staffIsOwner}
+            />
+            <div className="hidden min-w-0 flex-wrap items-center gap-2 sm:flex sm:gap-3">
+              <CategoryFilterControl
+                options={categoryFilterOptions}
+                selectedIds={categoryFilterIds}
+                onToggle={onToggleCategoryFilter}
+                onClear={onClearCategoryFilter}
+              />
+              <CalendarToolbarEnd staffName={staffName} staffIsOwner={staffIsOwner} />
+            </div>
+          </div>
         </div>
       </header>
 
       <div className={calScrollX}>
-        <div className="min-w-[560px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary md:min-w-[680px] lg:min-w-[760px]">
+        <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
           <div className="grid grid-cols-7 border-b-[0.5px] border-border">
             {WEEK_HEADER.map((label, i) => (
               <div
@@ -265,7 +282,11 @@ export function MonthCalendarView({
                     <div className="flex shrink-0 items-start justify-start">
                       <button
                         type="button"
-                        aria-label={`${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日の日表示`}
+                        aria-label={
+                          isClosedDay
+                            ? `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日の日表示（休業日）`
+                            : `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日の日表示`
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
                           onPickDay(date);
@@ -273,19 +294,24 @@ export function MonthCalendarView({
                         className="cursor-pointer touch-manipulation border-0 bg-transparent p-0 text-inherit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-0"
                       >
                         <span className="flex items-center gap-1">
-                          <span
-                            className={`flex min-h-9 min-w-9 items-center justify-center text-[13px] leading-none ${
-                              isToday
-                                ? "rounded-full bg-accent font-medium text-white"
-                                : inMonth
-                                  ? "font-medium text-text-primary"
-                                  : "font-medium text-[#D1D5DB]"
-                            }`}
-                          >
-                            {date.getDate()}
+                          <span className="relative inline-flex items-center justify-center">
+                            <span
+                              className={`flex min-h-9 min-w-9 items-center justify-center text-[13px] leading-none ${
+                                isToday
+                                  ? "rounded-full bg-accent font-medium text-white"
+                                  : inMonth
+                                    ? "font-medium text-text-primary"
+                                    : "font-medium text-[#D1D5DB]"
+                              }`}
+                            >
+                              {date.getDate()}
+                            </span>
+                            {isClosedDay ? (
+                              <ClosedDayMobileBadge isToday={isToday} />
+                            ) : null}
                           </span>
                           {isClosedDay ? (
-                            <span className="text-[10px] font-medium leading-none text-reservation-waitlist-text">
+                            <span className="hidden text-[10px] font-medium leading-none text-reservation-waitlist-text sm:inline">
                               休業日
                             </span>
                           ) : null}

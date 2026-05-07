@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-bg-primary text-text-primary font-sans">
+      <body className="flex min-h-full min-w-0 flex-col overflow-x-clip bg-bg-primary font-sans text-text-primary">
         {children}
       </body>
     </html>

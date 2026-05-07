@@ -4,11 +4,11 @@
  */
 
 export const calScrollX =
-  "min-w-0 flex-1 overflow-x-auto overscroll-x-contain touch-pan-x";
+  "min-w-0 w-full max-w-full flex-1 overflow-x-auto overscroll-x-contain touch-pan-x";
 
 /** ページ縦コンテナ（横パディングはモバイル寄り。ノッチ等は dashboard layout の safe area と併用） */
 export const calPageShell =
-  "flex min-h-full flex-1 flex-col gap-4 px-4 pb-4 pt-4 sm:px-6 md:gap-5";
+  "flex min-h-full w-full min-w-0 max-w-full flex-1 flex-col gap-4 px-3 pb-4 pt-4 sm:px-6 md:gap-5";
 
 /** 時刻ガター幅: モバイル 52px・md 以上 56px（w-14） */
 export const calTimeGutter =

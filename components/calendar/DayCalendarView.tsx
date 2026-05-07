@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
+import { CalendarMobileMenu } from "@/components/calendar/CalendarMobileMenu";
+import { ClosedDayMobileBadge } from "@/components/calendar/ClosedDayMobileBadge";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
   CategoryFilterControl,
@@ -188,8 +190,8 @@ export function DayCalendarView({
 
   return (
     <div className={calPageShell}>
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <header className="flex flex-col gap-3">
+        <div className="flex min-w-0 items-center justify-center gap-2 sm:justify-start">
           <button
             type="button"
             onClick={onPrevDay}
@@ -198,27 +200,38 @@ export function DayCalendarView({
           >
             ◀
           </button>
-          <div className="flex min-w-0 flex-wrap items-center justify-center gap-0.5 text-center text-[17px] font-medium leading-none text-text-primary">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-0.5 text-center text-[17px] font-medium leading-none text-text-primary sm:flex-none">
             <span>{y}年{mo}月</span>
-            <span className="mx-0.5 flex items-center gap-1">
+            <span className="relative mx-0.5 inline-flex items-center gap-1">
+              {isClosedDay ? (
+                <span className="sr-only sm:hidden">休業日</span>
+              ) : null}
               {isTitleToday ? (
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
-                  {daySelected.getDate()}
+                <span className="relative inline-flex items-center justify-center">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
+                    {daySelected.getDate()}
+                  </span>
+                  {isClosedDay ? (
+                    <ClosedDayMobileBadge isToday={true} />
+                  ) : null}
                 </span>
               ) : (
-                <span className="flex min-h-9 min-w-9 items-center justify-center">
-                  {daySelected.getDate()}
+                <span className="relative inline-flex items-center justify-center">
+                  <span className="flex min-h-9 min-w-9 items-center justify-center">
+                    {daySelected.getDate()}
+                  </span>
+                  {isClosedDay ? (
+                    <ClosedDayMobileBadge isToday={false} />
+                  ) : null}
                 </span>
               )}
               {isClosedDay ? (
-                <span className="text-[11px] font-medium leading-none text-reservation-waitlist-text">
+                <span className="hidden text-[11px] font-medium leading-none text-reservation-waitlist-text sm:inline">
                   休業日
                 </span>
               ) : null}
             </span>
-            <span>
-              日（{wd}）
-            </span>
+            <span>日（{wd}）</span>
           </div>
           <button
             type="button"
@@ -228,56 +241,71 @@ export function DayCalendarView({
           >
             ▶
           </button>
-          <button type="button" onClick={onToday} className={calTouchOutlineSm}>
-            今日
-          </button>
-          <button
-            type="button"
-            onClick={onOpenHeaderNew}
-            className={calTouchAccentSm}
-          >
-            ＋ 新規予約
-          </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <CategoryFilterControl
-            options={categoryFilterOptions}
-            selectedIds={categoryFilterIds}
-            onToggle={onToggleCategoryFilter}
-            onClear={onClearCategoryFilter}
-          />
-          <nav
-            className="flex items-center gap-1"
-            aria-label="カレンダー表示切り替え"
-          >
-            <button
-              type="button"
-              onClick={onSelectViewDay}
-              className={calViewSegBtn(activeView === "day")}
-            >
-              日
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <button type="button" onClick={onToday} className={calTouchOutlineSm}>
+              今日
             </button>
             <button
               type="button"
-              onClick={onSelectViewWeek}
-              className={calViewSegBtn(activeView === "week")}
+              onClick={onOpenHeaderNew}
+              className={calTouchAccentSm}
             >
-              週
+              <span className="sm:hidden">＋ 新規</span>
+              <span className="hidden sm:inline">＋ 新規予約</span>
             </button>
-            <button
-              type="button"
-              onClick={onSelectViewMonth}
-              className={calViewSegBtn(activeView === "month")}
+            <nav
+              className="flex items-center gap-1"
+              aria-label="カレンダー表示切り替え"
             >
-              月
-            </button>
-          </nav>
-          <CalendarToolbarEnd staffName={staffName} staffIsOwner={staffIsOwner} />
+              <button
+                type="button"
+                onClick={onSelectViewDay}
+                className={calViewSegBtn(activeView === "day")}
+              >
+                日
+              </button>
+              <button
+                type="button"
+                onClick={onSelectViewWeek}
+                className={calViewSegBtn(activeView === "week")}
+              >
+                週
+              </button>
+              <button
+                type="button"
+                onClick={onSelectViewMonth}
+                className={calViewSegBtn(activeView === "month")}
+              >
+                月
+              </button>
+            </nav>
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <CalendarMobileMenu
+              categoryFilterOptions={categoryFilterOptions}
+              categoryFilterIds={categoryFilterIds}
+              onToggleCategoryFilter={onToggleCategoryFilter}
+              onClearCategoryFilter={onClearCategoryFilter}
+              staffName={staffName}
+              staffIsOwner={staffIsOwner}
+            />
+            <div className="hidden min-w-0 flex-wrap items-center gap-2 sm:flex sm:gap-3">
+              <CategoryFilterControl
+                options={categoryFilterOptions}
+                selectedIds={categoryFilterIds}
+                onToggle={onToggleCategoryFilter}
+                onClear={onClearCategoryFilter}
+              />
+              <CalendarToolbarEnd staffName={staffName} staffIsOwner={staffIsOwner} />
+            </div>
+          </div>
         </div>
       </header>
 
       <div className={calScrollX}>
-          <div className="min-w-[320px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary md:min-w-[400px]">
+          <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
           <div
             className="flex flex-wrap items-center gap-2 border-b-[0.5px] border-border py-2 pl-[52px] pr-2 md:pl-14"
             aria-label="当日サマリー"

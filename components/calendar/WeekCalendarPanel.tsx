@@ -1,5 +1,7 @@
 "use client";
 
+import { CalendarMobileMenu } from "@/components/calendar/CalendarMobileMenu";
+import { ClosedDayMobileBadge } from "@/components/calendar/ClosedDayMobileBadge";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
   CategoryFilterControl,
@@ -54,7 +56,7 @@ function WeekReservationBlock({
 }) {
   return (
     <div
-      className={`pointer-events-auto absolute inset-x-[2px] z-[5] cursor-pointer touch-manipulation rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[6px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
+      className={`pointer-events-auto absolute inset-x-[2px] z-[5] min-w-0 cursor-pointer touch-manipulation overflow-hidden rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[4px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] sm:px-[6px] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
       style={{
         top: layout.top,
         height: layout.height,
@@ -72,13 +74,13 @@ function WeekReservationBlock({
         }
       }}
     >
-      <div className="text-xs font-medium leading-tight">
+      <div className="truncate text-xs font-medium leading-tight">
         {res.customerName} {res.partySize}名
       </div>
-      <div className="mt-px text-[10px] leading-tight opacity-[0.85]">
+      <div className="mt-px truncate text-[10px] leading-tight opacity-[0.85]">
         {formatHmRange(res.startAt, res.endAt)}
       </div>
-      <div className="mt-px text-[10px] leading-tight opacity-[0.85]">
+      <div className="mt-px truncate text-[10px] leading-tight opacity-[0.85]">
         {res.tableOrNote}
       </div>
     </div>
@@ -138,8 +140,8 @@ export function WeekCalendarPanel({
 }: WeekCalendarPanelProps) {
   return (
     <div className={calPageShell}>
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <header className="flex flex-col gap-3">
+        <div className="flex min-w-0 items-center justify-center gap-2 sm:justify-start">
           <button
             type="button"
             onClick={onPrevWeek}
@@ -148,7 +150,7 @@ export function WeekCalendarPanel({
           >
             ◀
           </button>
-          <span className="min-w-[7.5rem] text-center text-[17px] font-medium leading-none text-text-primary">
+          <span className="min-w-[7.5rem] flex-1 text-center text-[17px] font-medium leading-none text-text-primary sm:flex-none">
             {monthLabel}
           </span>
           <button
@@ -159,60 +161,71 @@ export function WeekCalendarPanel({
           >
             ▶
           </button>
-          <button
-            type="button"
-            onClick={onThisWeek}
-            className={calTouchOutlineSm}
-          >
-            今日
-          </button>
-          <button
-            type="button"
-            onClick={onOpenHeaderNew}
-            className={calTouchAccentSm}
-          >
-            ＋ 新規予約
-          </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <CategoryFilterControl
-            options={categoryFilterOptions}
-            selectedIds={categoryFilterIds}
-            onToggle={onToggleCategoryFilter}
-            onClear={onClearCategoryFilter}
-          />
-          <nav
-            className="flex items-center gap-1"
-            aria-label="カレンダー表示切り替え"
-          >
-            <button
-              type="button"
-              onClick={onSelectViewDay}
-              className={calViewSegBtn(activeView === "day")}
-            >
-              日
+        <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <button type="button" onClick={onThisWeek} className={calTouchOutlineSm}>
+              今日
             </button>
             <button
               type="button"
-              onClick={onSelectViewWeek}
-              className={calViewSegBtn(activeView === "week")}
+              onClick={onOpenHeaderNew}
+              className={calTouchAccentSm}
             >
-              週
+              <span className="sm:hidden">＋ 新規</span>
+              <span className="hidden sm:inline">＋ 新規予約</span>
             </button>
-            <button
-              type="button"
-              onClick={onSelectViewMonth}
-              className={calViewSegBtn(activeView === "month")}
+            <nav
+              className="flex items-center gap-1"
+              aria-label="カレンダー表示切り替え"
             >
-              月
-            </button>
-          </nav>
-          <CalendarToolbarEnd staffName={staffName} staffIsOwner={staffIsOwner} />
+              <button
+                type="button"
+                onClick={onSelectViewDay}
+                className={calViewSegBtn(activeView === "day")}
+              >
+                日
+              </button>
+              <button
+                type="button"
+                onClick={onSelectViewWeek}
+                className={calViewSegBtn(activeView === "week")}
+              >
+                週
+              </button>
+              <button
+                type="button"
+                onClick={onSelectViewMonth}
+                className={calViewSegBtn(activeView === "month")}
+              >
+                月
+              </button>
+            </nav>
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <CalendarMobileMenu
+              categoryFilterOptions={categoryFilterOptions}
+              categoryFilterIds={categoryFilterIds}
+              onToggleCategoryFilter={onToggleCategoryFilter}
+              onClearCategoryFilter={onClearCategoryFilter}
+              staffName={staffName}
+              staffIsOwner={staffIsOwner}
+            />
+            <div className="hidden min-w-0 flex-wrap items-center gap-2 sm:flex sm:gap-3">
+              <CategoryFilterControl
+                options={categoryFilterOptions}
+                selectedIds={categoryFilterIds}
+                onToggle={onToggleCategoryFilter}
+                onClear={onClearCategoryFilter}
+              />
+              <CalendarToolbarEnd staffName={staffName} staffIsOwner={staffIsOwner} />
+            </div>
+          </div>
         </div>
       </header>
 
       <div className={calScrollX}>
-        <div className="min-w-[720px] overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary md:min-w-[820px] lg:min-w-[920px]">
+        <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
           <div className="flex" style={{ height: HEADER_HEIGHT_PX }}>
             <div
               className={`${calTimeGutter} border-b-[0.5px] border-border bg-bg-primary`}
@@ -227,23 +240,29 @@ export function WeekCalendarPanel({
                     key={d.toISOString()}
                     type="button"
                     onClick={() => onDayHeaderClick(d)}
-                    className="flex min-h-[3.5rem] touch-manipulation flex-col items-center justify-center gap-0.5 border-b-[0.5px] border-l-[0.5px] border-border bg-bg-primary py-1"
+                    aria-label={
+                      isClosedDay ? `${weekdayLabelJa(d)}・休業日` : undefined
+                    }
+                    className="flex min-h-[3.5rem] w-full min-w-0 touch-manipulation flex-col items-center justify-center gap-0.5 border-b-[0.5px] border-l-[0.5px] border-border bg-bg-primary py-1"
                   >
                     <span className="text-[11px] leading-none text-text-tertiary">
                       {weekdayLabelJa(d)}
                     </span>
-                    <span className="flex items-center gap-1">
-                      {isToday ? (
-                        <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full bg-accent text-xs font-medium leading-none text-white">
-                          {d.getDate()}
-                        </span>
-                      ) : (
-                        <span className="flex min-h-9 min-w-9 items-center justify-center text-xs font-medium leading-none text-text-primary">
-                          {d.getDate()}
-                        </span>
-                      )}
+                    <span className="flex min-w-0 max-w-full flex-nowrap items-center justify-center gap-1">
+                      <span className="relative inline-flex items-center justify-center">
+                        {isToday ? (
+                          <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full bg-accent text-xs font-medium leading-none text-white">
+                            {d.getDate()}
+                          </span>
+                        ) : (
+                          <span className="flex min-h-9 min-w-9 items-center justify-center text-xs font-medium leading-none text-text-primary">
+                            {d.getDate()}
+                          </span>
+                        )}
+                        {isClosedDay ? <ClosedDayMobileBadge isToday={isToday} /> : null}
+                      </span>
                       {isClosedDay ? (
-                        <span className="text-[10px] font-medium leading-none text-reservation-waitlist-text">
+                        <span className="hidden text-[10px] font-medium leading-none text-reservation-waitlist-text sm:inline">
                           休業日
                         </span>
                       ) : null}

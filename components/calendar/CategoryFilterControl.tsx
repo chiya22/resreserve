@@ -10,6 +10,7 @@ type CategoryFilterControlProps = {
   selectedIds: string[];
   onToggle: (categoryId: string) => void;
   onClear: () => void;
+  className?: string;
 };
 
 export function CategoryFilterControl({
@@ -17,12 +18,18 @@ export function CategoryFilterControl({
   selectedIds,
   onToggle,
   onClear,
+  className,
 }: CategoryFilterControlProps) {
   const activeCount = selectedIds.length;
   const isAll = activeCount === 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5" aria-label="カテゴリ絞り込み">
+    <div
+      className={["flex flex-wrap items-center gap-1.5", className]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label="カテゴリ絞り込み"
+    >
       <button
         type="button"
         onClick={onClear}
