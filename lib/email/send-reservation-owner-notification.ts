@@ -4,9 +4,10 @@ import { listOwnerNotificationEmails } from "@/lib/data/owner-notification-email
 import { env } from "@/lib/env";
 import {
   formatReservationIndexed,
+  formatReservationNotifyActorLine,
   getReservationNotifyChangedLineNumbers,
 } from "@/lib/email/format-reservation-notification";
-import type { ReservationWithTable } from "@/types";
+import type { ReservationWithTable, Staff } from "@/types";
 
 function getResend(): Resend | null {
   const key = env.RESEND_API_KEY;
@@ -52,19 +53,23 @@ async function sendToOwners(subject: string, text: string) {
 /** 失敗時はログのみ（予約の成功とは切り離す） */
 export async function notifyReservationCreated(
   row: ReservationWithTable,
+  actor: Staff | null,
 ): Promise<void> {
   const block = formatReservationIndexed(row);
+  const actorLine = formatReservationNotifyActorLine(actor);
   await sendToOwners(
     "【予約】新規予約が登録されました",
-    `予約が追加されました。\n\n【予約情報】\n${block}\n`,
+    `予約が追加されました。\n\n${actorLine}\n\n【予約情報】\n${block}\n`,
   );
 }
 
 export async function notifyReservationUpdated(
   before: ReservationWithTable,
   after: ReservationWithTable,
+  actor: Staff | null,
 ): Promise<void> {
   const changedLines = getReservationNotifyChangedLineNumbers(before, after);
+  const actorLine = formatReservationNotifyActorLine(actor);
   const legend =
     changedLines.size > 0
       ? "※＝変更前のうち更新があった項目　▶＝変更後で更新があった項目（同一行番号で対応）\n\n"
@@ -81,18 +86,20 @@ export async function notifyReservationUpdated(
 
   await sendToOwners(
     "【予約】予約が更新されました",
-    `予約が更新されました。\n\n${legend}▼ 変更前\n${beforeBlock}\n\n▼ 変更後\n${afterBlock}\n`,
+    `予約が更新されました。\n\n${actorLine}\n\n${legend}▼ 変更前\n${beforeBlock}\n\n▼ 変更後\n${afterBlock}\n`,
   );
 }
 
 export async function notifyReservationCancelled(
   row: ReservationWithTable,
+  actor: Staff | null,
 ): Promise<void> {
   const block = formatReservationIndexed(row, {
     statusOverride: "cancelled",
   });
+  const actorLine = formatReservationNotifyActorLine(actor);
   await sendToOwners(
     "【予約】予約がキャンセルされました",
-    `予約がキャンセルされました。\n\n【キャンセルされた予約情報】\n${block}\n`,
+    `予約がキャンセルされました。\n\n${actorLine}\n\n【キャンセルされた予約情報】\n${block}\n`,
   );
 }

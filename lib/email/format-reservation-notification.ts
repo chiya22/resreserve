@@ -1,4 +1,26 @@
-import type { ReservationStatus, ReservationWithTable } from "@/types";
+import type {
+  ReservationStatus,
+  ReservationWithTable,
+  Staff,
+  StaffRole,
+} from "@/types";
+
+const STAFF_ROLE_JA: Record<StaffRole, string> = {
+  owner: "オーナー",
+  manager: "マネージャー",
+  staff: "スタッフ",
+};
+
+/** オーナー向け予約通知メールに記載する操作者1行 */
+export function formatReservationNotifyActorLine(actor: Staff | null): string {
+  if (!actor) {
+    return "【操作者】特定できませんでした（セッションまたはスタッフ情報の取得に失敗した可能性があります）。";
+  }
+  const name = actor.name.trim() || "（氏名未設定）";
+  const login = actor.login_id?.trim() || "—";
+  const role = STAFF_ROLE_JA[actor.role] ?? actor.role;
+  return `【操作者】${name}／ログインID: ${login}／役割: ${role}`;
+}
 
 const STATUS_JA: Record<ReservationStatus, string> = {
   confirmed: "確定",

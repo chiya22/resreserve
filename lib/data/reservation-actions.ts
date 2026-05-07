@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentStaff } from "@/lib/data/auth";
 import {
   checkBusinessRules,
   reservationInputSchema,
@@ -74,7 +75,8 @@ export async function createReservation(
 
   revalidatePath("/calendar");
   const typed = data as ReservationWithTable;
-  queueOwnerNotify(notifyReservationCreated(typed));
+  const actor = await getCurrentStaff();
+  queueOwnerNotify(notifyReservationCreated(typed, actor));
   return ok(typed);
 }
 
@@ -157,7 +159,8 @@ export async function updateReservation(
 
   revalidatePath("/calendar");
   const typed = data as ReservationWithTable;
-  queueOwnerNotify(notifyReservationUpdated(row, typed));
+  const actor = await getCurrentStaff();
+  queueOwnerNotify(notifyReservationUpdated(row, typed, actor));
   return ok(typed);
 }
 
@@ -192,6 +195,7 @@ export async function cancelReservation(
   }
 
   revalidatePath("/calendar");
-  queueOwnerNotify(notifyReservationCancelled(before));
+  const actor = await getCurrentStaff();
+  queueOwnerNotify(notifyReservationCancelled(before, actor));
   return ok(undefined);
 }
