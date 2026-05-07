@@ -45,18 +45,26 @@ export async function createReservation(
 
   const supabase = await createClient();
 
+  const values: Record<string, unknown> = {
+    table_id: parsed.data.table_id,
+    customer_name: parsed.data.customer_name,
+    customer_phone: parsed.data.customer_phone ?? null,
+    party_size: parsed.data.party_size,
+    category_id: parsed.data.category_id,
+    start_at: parsed.data.start_at,
+    end_at: parsed.data.end_at,
+    notes: parsed.data.notes ?? null,
+  };
+
+  // DB に amount 列がある環境では予約金額も保存する（型定義更新前でも動くように動的に付与）
+  if (parsed.data.amount !== undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    (values as { amount?: number | null }).amount = parsed.data.amount ?? null;
+  }
+
   const { data, error } = await supabase
     .from("reservations")
-    .insert({
-      table_id: parsed.data.table_id,
-      customer_name: parsed.data.customer_name,
-      customer_phone: parsed.data.customer_phone ?? null,
-      party_size: parsed.data.party_size,
-      category_id: parsed.data.category_id,
-      start_at: parsed.data.start_at,
-      end_at: parsed.data.end_at,
-      notes: parsed.data.notes ?? null,
-    })
+    .insert(values as never)
     .select(reservationSelectWithTable)
     .single();
 
@@ -127,7 +135,7 @@ export async function updateReservation(
   });
   if (!rules.success) return rules;
 
-  const patch: ReservationUpdate = {};
+  const patch: Record<string, unknown> = {};
   const p = partialParsed.data;
   if (p.table_id !== undefined) patch.table_id = p.table_id;
   if (p.customer_name !== undefined) patch.customer_name = p.customer_name;
@@ -137,6 +145,10 @@ export async function updateReservation(
   if (p.start_at !== undefined) patch.start_at = p.start_at;
   if (p.end_at !== undefined) patch.end_at = p.end_at;
   if (p.notes !== undefined) patch.notes = p.notes;
+  if (p.amount !== undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    (patch as { amount?: number | null }).amount = p.amount ?? null;
+  }
 
   if (Object.keys(patch).length === 0) {
     return ok(row);
@@ -144,7 +156,7 @@ export async function updateReservation(
 
   const { data, error } = await supabase
     .from("reservations")
-    .update(patch)
+    .update(patch as never)
     .eq("id", id)
     .select(reservationSelectWithTable)
     .single();

@@ -62,6 +62,9 @@ export function ReservationDetailModal({
   );
   const [partySize, setPartySize] = useState(reservation.party_size);
   const [categoryId, setCategoryId] = useState<string>(reservation.category_id);
+  const [amount, setAmount] = useState<number | "">(
+    (reservation as unknown as { amount?: number | null }).amount ?? "",
+  );
   const [notes, setNotes] = useState(reservation.notes ?? "");
   const [startDate, setStartDate] = useState(
     toDateInputValue(new Date(reservation.start_at)),
@@ -90,6 +93,9 @@ export function ReservationDetailModal({
     setStartTime(toTimeSelectValue(new Date(reservation.start_at)));
     setEndDate(toDateInputValue(new Date(reservation.end_at)));
     setEndTime(toTimeSelectValue(new Date(reservation.end_at)));
+    setAmount(
+      (reservation as unknown as { amount?: number | null }).amount ?? "",
+    );
   }, [reservation.id, reservation.updated_at]);
   /* eslint-enable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 
@@ -124,6 +130,11 @@ export function ReservationDetailModal({
     const startAt = parseDateAndTime(startDate, startTime);
     const endAt = parseDateAndTime(endDate, endTime);
 
+    if (amount !== "" && (Number.isNaN(amount) || amount < 0)) {
+      setError("金額は0円以上の数値で入力してください");
+      return;
+    }
+
     startTransition(async () => {
       const result = await updateReservation(reservation.id, {
         customer_name: customerName.trim(),
@@ -133,6 +144,7 @@ export function ReservationDetailModal({
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
         notes: notes.trim() || null,
+        amount: amount === "" ? null : amount,
       });
       if (!result.success) {
         setError(result.error);
@@ -242,6 +254,23 @@ export function ReservationDetailModal({
                   value={partySize}
                   onChange={(ev) => setPartySize(Number(ev.target.value))}
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-text-tertiary">
+                  予約金額（任意・税込／円）
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={100}
+                  value={amount}
+                  onChange={(ev) => {
+                    const v = ev.target.value;
+                    setAmount(v === "" ? "" : Number(v));
+                  }}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
+                  placeholder="例: 8000"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -363,6 +392,17 @@ export function ReservationDetailModal({
                 <span className="w-20 shrink-0 text-text-tertiary">人数</span>
                 <span className="text-text-primary">
                   {reservation.party_size}名
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <span className="w-20 shrink-0 text-text-tertiary">金額</span>
+                <span className="text-text-primary">
+                  {(() => {
+                    const amt = (reservation as unknown as { amount?: number | null })
+                      .amount;
+                    if (amt == null) return "—";
+                    return `${amt.toLocaleString("ja-JP")}円（税込）`;
+                  })()}
                 </span>
               </div>
               <div className="flex gap-2">

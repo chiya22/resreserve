@@ -69,6 +69,7 @@ export function NewReservationModal({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [partySize, setPartySize] = useState(10);
+  const [amount, setAmount] = useState<number | "">("");
   const [notes, setNotes] = useState("");
   const [datetime, setDatetime] = useState(() =>
     buildInitialDatetime(defaultStartAt),
@@ -90,6 +91,10 @@ export function NewReservationModal({
       setError("カテゴリを選んでください");
       return;
     }
+    if (amount !== "" && (Number.isNaN(amount) || amount < 0)) {
+      setError("金額は0円以上の数値で入力してください");
+      return;
+    }
 
     startTransition(async () => {
       const result = await createReservation({
@@ -101,6 +106,7 @@ export function NewReservationModal({
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
         notes: notes.trim() || null,
+        amount: amount === "" ? null : amount,
       });
 
       if (!result.success) {
@@ -176,6 +182,28 @@ export function NewReservationModal({
               value={partySize}
               onChange={(ev) => setPartySize(Number(ev.target.value))}
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="nr-amount"
+              className="mb-1 block text-xs text-text-tertiary"
+            >
+              予約金額（任意・税込／円）
+            </label>
+            <input
+              id="nr-amount"
+              name="amount"
+              type="number"
+              min={0}
+              step={100}
+              value={amount}
+              onChange={(ev) => {
+                const v = ev.target.value;
+                setAmount(v === "" ? "" : Number(v));
+              }}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
+              placeholder="例: 8000"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">

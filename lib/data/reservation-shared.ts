@@ -16,6 +16,14 @@ const reservationInputBaseSchema = z.object({
   start_at: z.iso.datetime(),
   end_at: z.iso.datetime(),
   notes: z.string().max(500).optional().nullable(),
+  // 税込の予約金額（円）。任意入力のため null 許可。
+  amount: z
+    .number()
+    .int()
+    .min(0, "金額は0円以上で入力してください")
+    .max(1_000_000_000, "金額が大きすぎます")
+    .optional()
+    .nullable(),
 });
 
 export const reservationInputSchema = reservationInputBaseSchema.refine(
@@ -43,6 +51,7 @@ export const reservationPartialSchema = reservationInputBaseSchema
   });
 
 export function rowToInput(r: Reservation): ReservationInput {
+  const withAmount = r as unknown as { amount?: number | null };
   return {
     table_id: r.table_id,
     customer_name: r.customer_name,
@@ -52,6 +61,7 @@ export function rowToInput(r: Reservation): ReservationInput {
     start_at: r.start_at,
     end_at: r.end_at,
     notes: r.notes,
+    amount: withAmount.amount ?? null,
   };
 }
 

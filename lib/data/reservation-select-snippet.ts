@@ -10,6 +10,7 @@ export const RESERVATION_WITH_TABLE_EMBED = `
   start_at,
   end_at,
   notes,
+  amount,
   internal_notes,
   created_by,
   created_at,
