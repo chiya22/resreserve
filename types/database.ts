@@ -1,4 +1,4 @@
-﻿// Supabase スキーマ由来（MCP `generate_typescript_types` と同一内容）。CLI: `npx supabase gen types typescript --project-id <ref>`
+// Supabase スキーマ由来（MCP `generate_typescript_types` と同一内容）。CLI: `npx supabase gen types typescript --project-id <ref>`
 export type Json =
   | string
   | number
@@ -115,6 +115,7 @@ export type Database = {
       }
       reservations: {
         Row: {
+          amount: number | null
           category_id: string
           created_at: string
           created_by: string | null
@@ -131,6 +132,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount?: number | null
           category_id?: string
           created_at?: string
           created_by?: string | null
@@ -147,6 +149,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount?: number | null
           category_id?: string
           created_at?: string
           created_by?: string | null
