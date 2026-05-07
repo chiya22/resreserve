@@ -15,6 +15,12 @@ export type TableOption = (typeof TABLE_OPTIONS)[number];
 export const HOUR_START = 11;
 export const HOUR_END = 22;
 
+/**
+ * カレンダー表示・予約一覧の日付レンジ計算に使う IANA タイムゾーン。
+ * Vercel 等で Node のシステム TZ が UTC でも、店舗の暦と一致させる。
+ */
+export const CALENDAR_DISPLAY_TIMEZONE = "Asia/Tokyo" as const;
+
 /** 30分刻みの時刻オプション（HH:MM） */
 export function buildTimeOptions(): string[] {
   const out: string[] = [];
