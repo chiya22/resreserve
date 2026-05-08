@@ -33,6 +33,7 @@ const STATUS_JA: Record<ReservationStatus, string> = {
 const fmt = new Intl.DateTimeFormat("ja-JP", {
   dateStyle: "medium",
   timeStyle: "short",
+  timeZone: "Asia/Tokyo",
 });
 
 function formatDt(iso: string): string {
