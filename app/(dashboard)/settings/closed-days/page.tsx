@@ -8,13 +8,13 @@ import { listClosedDaysAll } from "@/lib/data/closed-days";
 
 export const metadata: Metadata = {
   title: "休業日設定 | 予約管理",
-  description: "休業日を登録・更新・削除します（オーナーのみ）",
+  description: "休業日を登録・更新・削除します（オーナー・マネージャー）",
 };
 
 export default async function SettingsClosedDaysPage() {
   const me = await getCurrentStaff();
   if (!me) redirect("/login?message=staff_required");
-  if (me.role !== "owner") redirect("/calendar");
+  if (me.role !== "owner" && me.role !== "manager") redirect("/calendar");
 
   const closedDays = await listClosedDaysAll();
 

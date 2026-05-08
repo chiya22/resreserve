@@ -107,6 +107,7 @@ export type DayCalendarViewProps = {
   activeView: CalendarViewMode;
   staffName: string;
   staffIsOwner: boolean;
+  staffCanManageClosedDays: boolean;
   categoryFilterOptions: CalendarCategoryFilterOption[];
   categoryFilterIds: string[];
   onToggleCategoryFilter: (categoryId: string) => void;
@@ -131,6 +132,7 @@ export function DayCalendarView({
   activeView,
   staffName,
   staffIsOwner,
+  staffCanManageClosedDays,
   categoryFilterOptions,
   categoryFilterIds,
   onToggleCategoryFilter,
@@ -290,6 +292,7 @@ export function DayCalendarView({
               onClearCategoryFilter={onClearCategoryFilter}
               staffName={staffName}
               staffIsOwner={staffIsOwner}
+              staffCanManageClosedDays={staffCanManageClosedDays}
             />
             <div className="hidden min-w-0 flex-wrap items-center gap-2 sm:flex sm:gap-3">
               <CategoryFilterControl
@@ -298,7 +301,11 @@ export function DayCalendarView({
                 onToggle={onToggleCategoryFilter}
                 onClear={onClearCategoryFilter}
               />
-              <CalendarToolbarEnd staffName={staffName} staffIsOwner={staffIsOwner} />
+              <CalendarToolbarEnd
+                staffName={staffName}
+                staffIsOwner={staffIsOwner}
+                staffCanManageClosedDays={staffCanManageClosedDays}
+              />
             </div>
           </div>
         </div>

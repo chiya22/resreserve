@@ -21,6 +21,7 @@ type CalendarMobileMenuProps = {
   onClearCategoryFilter: () => void;
   staffName: string | null | undefined;
   staffIsOwner: boolean;
+  staffCanManageClosedDays: boolean;
 };
 
 export function CalendarMobileMenu({
@@ -30,6 +31,7 @@ export function CalendarMobileMenu({
   onClearCategoryFilter,
   staffName,
   staffIsOwner,
+  staffCanManageClosedDays,
 }: CalendarMobileMenuProps) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -118,7 +120,7 @@ export function CalendarMobileMenu({
                 />
               </section>
 
-              {staffIsOwner ? (
+              {staffCanManageClosedDays ? (
                 <nav
                   className="flex flex-col gap-2 border-t-[0.5px] border-border pt-4"
                   aria-label="設定"
@@ -130,20 +132,24 @@ export function CalendarMobileMenu({
                   >
                     休業日
                   </Link>
-                  <Link
-                    href="/settings/categories"
-                    className={menuLinkClass}
-                    onClick={close}
-                  >
-                    カテゴリ
-                  </Link>
-                  <Link
-                    href="/settings/staff"
-                    className={menuLinkClass}
-                    onClick={close}
-                  >
-                    アカウント管理
-                  </Link>
+                  {staffIsOwner ? (
+                    <>
+                      <Link
+                        href="/settings/categories"
+                        className={menuLinkClass}
+                        onClick={close}
+                      >
+                        カテゴリ
+                      </Link>
+                      <Link
+                        href="/settings/staff"
+                        className={menuLinkClass}
+                        onClick={close}
+                      >
+                        アカウント管理
+                      </Link>
+                    </>
+                  ) : null}
                 </nav>
               ) : null}
 

@@ -47,6 +47,7 @@ export type CalendarViewProps = {
   initialDate: string;
   staffName: string;
   staffIsOwner: boolean;
+  staffCanManageClosedDays: boolean;
   categoryRows: ReservationCategoryRow[];
   initialClosedDays: ClosedDay[];
 };
@@ -76,6 +77,7 @@ export function CalendarView({
   initialDate,
   staffName,
   staffIsOwner,
+  staffCanManageClosedDays,
   categoryRows,
   initialClosedDays,
 }: CalendarViewProps) {
@@ -298,6 +300,7 @@ export function CalendarView({
           activeView={view}
           staffName={staffName}
           staffIsOwner={staffIsOwner}
+          staffCanManageClosedDays={staffCanManageClosedDays}
           categoryFilterOptions={categoryFilterOptions}
           categoryFilterIds={categoryFilterIds}
           onToggleCategoryFilter={toggleCategoryFilter}
@@ -323,6 +326,7 @@ export function CalendarView({
           activeView={view}
           staffName={staffName}
           staffIsOwner={staffIsOwner}
+          staffCanManageClosedDays={staffCanManageClosedDays}
           categoryFilterOptions={categoryFilterOptions}
           categoryFilterIds={categoryFilterIds}
           onToggleCategoryFilter={toggleCategoryFilter}
@@ -353,6 +357,7 @@ export function CalendarView({
           activeView={view}
           staffName={staffName}
           staffIsOwner={staffIsOwner}
+          staffCanManageClosedDays={staffCanManageClosedDays}
           categoryFilterOptions={categoryFilterOptions}
           categoryFilterIds={categoryFilterIds}
           onToggleCategoryFilter={toggleCategoryFilter}

@@ -19,10 +19,12 @@ const updateClosedDaySchema = z.object({
   note: z.string().trim().max(200).optional().nullable(),
 });
 
-async function requireOwner(): Promise<Result<void, string>> {
+async function requireClosedDayMaintainer(): Promise<Result<void, string>> {
   const me = await getCurrentStaff();
   if (!me) return err("ログインが必要です");
-  if (me.role !== "owner") return err("オーナーのみ実行できます");
+  if (me.role !== "owner" && me.role !== "manager") {
+    return err("オーナーまたはマネージャーのみ実行できます");
+  }
   return ok(undefined);
 }
 
@@ -32,8 +34,8 @@ function revalidateClosedDaysUi(): void {
 }
 
 export async function createClosedDay(raw: unknown): Promise<Result<ClosedDay, string>> {
-  const owner = await requireOwner();
-  if (!owner.success) return owner;
+  const maintainer = await requireClosedDayMaintainer();
+  if (!maintainer.success) return maintainer;
 
   const parsed = createClosedDaySchema.safeParse(raw);
   if (!parsed.success) {
@@ -64,8 +66,8 @@ export async function createClosedDay(raw: unknown): Promise<Result<ClosedDay, s
 }
 
 export async function updateClosedDay(raw: unknown): Promise<Result<void, string>> {
-  const owner = await requireOwner();
-  if (!owner.success) return owner;
+  const maintainer = await requireClosedDayMaintainer();
+  if (!maintainer.success) return maintainer;
 
   const parsed = updateClosedDaySchema.safeParse(raw);
   if (!parsed.success) {
@@ -95,8 +97,8 @@ export async function updateClosedDay(raw: unknown): Promise<Result<void, string
 }
 
 export async function deleteClosedDay(id: string): Promise<Result<void, string>> {
-  const owner = await requireOwner();
-  if (!owner.success) return owner;
+  const maintainer = await requireClosedDayMaintainer();
+  if (!maintainer.success) return maintainer;
 
   const idParsed = z.string().uuid().safeParse(id);
   if (!idParsed.success) return err("休業日IDが不正です");

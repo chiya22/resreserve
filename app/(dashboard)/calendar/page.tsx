@@ -52,6 +52,9 @@ export default async function CalendarPage({
       initialDate={dateKey}
       staffName={staff.name}
       staffIsOwner={staff.role === "owner"}
+      staffCanManageClosedDays={
+        staff.role === "owner" || staff.role === "manager"
+      }
       categoryRows={categoryRows}
       initialClosedDays={closedDays}
     />
