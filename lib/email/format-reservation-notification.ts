@@ -47,7 +47,16 @@ function normNotes(n: string | null | undefined): string {
   return (n ?? "").trim() || "—";
 }
 
-/** 変更前後で値が異なる行番号（1〜11）。通知メールの目印に使用 */
+function normAmount(a: number | null | undefined): number | null {
+  return a ?? null;
+}
+
+function formatAmountJa(a: number | null | undefined): string {
+  if (a == null) return "—";
+  return `${a.toLocaleString("ja-JP")}円（税込）`;
+}
+
+/** 変更前後で値が異なる行番号（1〜12）。通知メールの目印に使用 */
 export function getReservationNotifyChangedLineNumbers(
   before: ReservationWithTable,
   after: ReservationWithTable,
@@ -69,9 +78,10 @@ export function getReservationNotifyChangedLineNumbers(
   if (before.start_at !== after.start_at) changed.add(7);
   if (before.end_at !== after.end_at) changed.add(8);
   if ((before.table_id ?? null) !== (after.table_id ?? null)) changed.add(9);
-  if (normNotes(before.notes) !== normNotes(after.notes)) changed.add(10);
+  if (normAmount(before.amount) !== normAmount(after.amount)) changed.add(10);
+  if (normNotes(before.notes) !== normNotes(after.notes)) changed.add(11);
   if (normNotes(before.internal_notes) !== normNotes(after.internal_notes)) {
-    changed.add(11);
+    changed.add(12);
   }
 
   return changed;
@@ -95,6 +105,7 @@ function buildIndexedLines(
   const tableName = row.table?.name ?? "—";
   const phone = normPhone(row.customer_phone);
   const phoneDisplay = phone || "—";
+  const amountDisplay = formatAmountJa(row.amount);
   const notes = normNotes(row.notes);
   const internal = normNotes(row.internal_notes);
 
@@ -108,8 +119,9 @@ function buildIndexedLines(
     [7, `7. 開始: ${formatDt(row.start_at)}`],
     [8, `8. 終了: ${formatDt(row.end_at)}`],
     [9, `9. テーブル: ${tableName}`],
-    [10, `10. 備考: ${notes}`],
-    [11, `11. スタッフ間メモ: ${internal}`],
+    [10, `10. 予約金額: ${amountDisplay}`],
+    [11, `11. 備考: ${notes}`],
+    [12, `12. スタッフ間メモ: ${internal}`],
   ];
 
   return raw.map(([num, text]) => {

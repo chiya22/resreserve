@@ -201,7 +201,7 @@ export function ReservationDetailModal({
               <button
                 type="button"
                 onClick={() => {
-                  setMode("view");
+                  setMode("edit");
                   setError(null);
                 }}
                 className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
@@ -371,6 +371,13 @@ export function ReservationDetailModal({
                 戻る
               </button>
               <button
+                type="button"
+                onClick={() => setMode("confirm-delete")}
+                className="inline-flex min-h-11 min-w-[5.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
+              >
+                キャンセル
+              </button>
+              <button
                 type="submit"
                 disabled={isPending}
                 className="inline-flex min-h-11 min-w-[5rem] items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm text-white hover:bg-[#3B7DE8] disabled:opacity-50 touch-manipulation active:scale-[0.97]"
@@ -430,13 +437,6 @@ export function ReservationDetailModal({
               </p>
             ) : null}
             <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setMode("confirm-delete")}
-                className="inline-flex min-h-11 min-w-[5.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
-              >
-                キャンセル
-              </button>
               <button
                 type="button"
                 onClick={() => setMode("edit")}
