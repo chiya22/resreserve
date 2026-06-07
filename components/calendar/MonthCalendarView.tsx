@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useState } from "react";
 import { CalendarMobileMenu } from "@/components/calendar/CalendarMobileMenu";
 import { ClosedDayMobileBadge } from "@/components/calendar/ClosedDayMobileBadge";
+import { MonthYearPickerPopover } from "@/components/calendar/MonthYearPickerPopover";
 import { CalendarToolbarEnd } from "@/components/calendar/CalendarToolbarEnd";
 import {
   CategoryFilterControl,
@@ -97,7 +98,7 @@ export function MonthCalendarView({
   onSlotClick,
   onReservationClick,
 }: MonthCalendarViewProps) {
-  const monthPickerRef = useRef<HTMLInputElement | null>(null);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const weeks = useMemo(() => buildMonthWeeks(monthAnchor), [monthAnchor]);
 
   const weekLayouts = useMemo(
@@ -110,22 +111,6 @@ export function MonthCalendarView({
       }),
     [weeks, reservations],
   );
-  const monthInputValue = useMemo(() => {
-    const y = monthAnchor.getFullYear();
-    const m = String(monthAnchor.getMonth() + 1).padStart(2, "0");
-    return `${y}-${m}`;
-  }, [monthAnchor]);
-
-  const openMonthPicker = () => {
-    const input = monthPickerRef.current;
-    if (!input) return;
-    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
-    if (typeof pickerInput.showPicker === "function") {
-      pickerInput.showPicker();
-      return;
-    }
-    input.click();
-  };
 
   return (
     <div className={calPageShell}>
@@ -139,14 +124,24 @@ export function MonthCalendarView({
           >
             ◀
           </button>
-          <button
-            type="button"
-            onClick={openMonthPicker}
-            className="min-h-11 min-w-0 max-w-full flex-1 rounded-md px-1 text-center text-[17px] font-medium leading-none text-text-primary hover:bg-bg-hover sm:min-w-[7.5rem] sm:flex-none sm:px-2"
-            aria-label="年月を選択"
-          >
-            {monthTitle(monthAnchor)}
-          </button>
+          <div className="relative min-w-0 flex-1 sm:min-w-[7.5rem] sm:flex-none">
+            <button
+              type="button"
+              onClick={() => setMonthPickerOpen(true)}
+              aria-expanded={monthPickerOpen}
+              aria-haspopup="dialog"
+              className="min-h-11 min-w-0 max-w-full w-full rounded-md px-1 text-center text-[17px] font-medium leading-none text-text-primary hover:bg-bg-hover sm:px-2"
+              aria-label="年月を選択"
+            >
+              {monthTitle(monthAnchor)}
+            </button>
+            <MonthYearPickerPopover
+              monthAnchor={monthAnchor}
+              open={monthPickerOpen}
+              onClose={() => setMonthPickerOpen(false)}
+              onSelectMonth={onJumpMonth}
+            />
+          </div>
           <button
             type="button"
             onClick={onNextMonth}
@@ -155,15 +150,6 @@ export function MonthCalendarView({
           >
             ▶
           </button>
-          <input
-            ref={monthPickerRef}
-            type="month"
-            value={monthInputValue}
-            onChange={(e) => onJumpMonth(e.target.value)}
-            className="sr-only"
-            aria-hidden
-            tabIndex={-1}
-          />
         </div>
         <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -280,7 +266,7 @@ export function MonthCalendarView({
                 return (
                   <div
                     key={date.toISOString()}
-                    className={`relative box-border flex min-h-[124px] flex-col overflow-hidden border-b-[0.5px] border-r-[0.5px] border-border px-1 pb-1 pt-[5px] md:min-h-[136px] ${cellBg}`}
+                    className={`relative box-border flex min-h-[124px] flex-col overflow-hidden border-b-[0.5px] border-r-[0.5px] border-border px-1 pb-1 pt-[5px] md:min-h-[136px] ${cellBg}${isClosedDay ? "" : " cursor-pointer"}`}
                     onClick={() => {
                       if (isClosedDay) return;
                       onSlotClick(date);

@@ -36,6 +36,12 @@ body {
   font-family: var(--font-sans);
 }
 
+a,
+:where(button:not(:disabled)),
+:where([role="button"]:not([aria-disabled="true"])) {
+  cursor: pointer;
+}
+
 @keyframes modal-in {
   from {
     opacity: 0;
