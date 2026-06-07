@@ -31,13 +31,28 @@ export function editModeCategoryChoicesForId(
   bookingOptions: { value: string; label: string }[],
   labelById: Map<string, string>,
 ): { value: string; label: string }[] {
+  return editModeCategoryChoicesForIds(
+    [currentCategoryId],
+    bookingOptions,
+    labelById,
+  );
+}
+
+export function editModeCategoryChoicesForIds(
+  currentCategoryIds: string[],
+  bookingOptions: { value: string; label: string }[],
+  labelById: Map<string, string>,
+): { value: string; label: string }[] {
   const seen = new Set(bookingOptions.map((o) => o.value));
   const out = [...bookingOptions];
-  if (!seen.has(currentCategoryId)) {
-    out.push({
-      value: currentCategoryId,
-      label: labelById.get(currentCategoryId) ?? "(不明なカテゴリ)",
-    });
+  for (const categoryId of currentCategoryIds) {
+    if (!seen.has(categoryId)) {
+      seen.add(categoryId);
+      out.push({
+        value: categoryId,
+        label: labelById.get(categoryId) ?? "(不明なカテゴリ)",
+      });
+    }
   }
   return out;
 }

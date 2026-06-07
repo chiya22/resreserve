@@ -164,7 +164,9 @@ export function CalendarView({
   const filteredReservations = useMemo(() => {
     if (categoryFilterIds.length === 0) return reservations;
     const selected = new Set(categoryFilterIds);
-    return reservations.filter((r) => selected.has(r.categoryId));
+    return reservations.filter((r) =>
+      r.categoryIds.some((id) => selected.has(id)),
+    );
   }, [reservations, categoryFilterIds]);
 
   const toggleCategoryFilter = useCallback((categoryId: string) => {
@@ -412,6 +414,7 @@ export function CalendarView({
             setShowNewModal(false);
             setNewDefaultStart(undefined);
           }}
+          onSuccess={() => router.refresh()}
         />
       ) : null}
 
@@ -421,6 +424,7 @@ export function CalendarView({
           categoryLabelById={categoryLabelById}
           bookingCategoryOptions={bookingCategoryOptions}
           onClose={() => setSelectedReservationId(null)}
+          onUpdated={() => router.refresh()}
         />
       ) : null}
     </>

@@ -43,9 +43,15 @@ export type ReservationCategoryEmbed = Pick<
 >;
 
 // 結合済みの型（カレンダー表示用）
+export type ReservationCategoryAssignmentEmbed = {
+  category_id: string;
+  reservation_categories: ReservationCategoryEmbed;
+};
+
 export type ReservationWithTable = Reservation & {
   table: Pick<Table, "id" | "name" | "capacity"> | null;
   reservation_categories: ReservationCategoryEmbed;
+  reservation_category_assignments?: ReservationCategoryAssignmentEmbed[];
 };
 
 // Result 型の再エクスポート

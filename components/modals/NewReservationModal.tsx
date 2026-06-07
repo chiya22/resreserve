@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import {
   addMinutes,
   defaultNewReservationRange,
@@ -9,6 +9,10 @@ import {
   toTimeSelectValue,
 } from "@/lib/calendar/datetime-ui";
 import { createReservation } from "@/lib/data/reservation-actions";
+import {
+  ReservationCategoryPicker,
+  toggleCategoryId,
+} from "@/components/modals/ReservationCategoryPicker";
 
 function buildInitialDatetime(defaultStartAt: string | undefined) {
   if (defaultStartAt) {
@@ -51,20 +55,24 @@ export function NewReservationModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const [categoryId, setCategoryId] = useState<string>(() => {
+  const [categoryIds, setCategoryIds] = useState<string[]>(() => {
     const hinted =
       defaultCategoryIdHint &&
       bookingCategoryOptions.some((o) => o.value === defaultCategoryIdHint)
         ? defaultCategoryIdHint
         : undefined;
-    return hinted ?? bookingCategoryOptions[0]?.value ?? "";
+    const initial = hinted ?? bookingCategoryOptions[0]?.value;
+    return initial ? [initial] : [];
   });
 
-  const resolvedCategoryId = useMemo(() => {
-    if (bookingCategoryOptions.some((o) => o.value === categoryId))
-      return categoryId;
-    return bookingCategoryOptions[0]?.value ?? "";
-  }, [bookingCategoryOptions, categoryId]);
+  const resolvedCategoryIds = useMemo(() => {
+    const valid = categoryIds.filter((id) =>
+      bookingCategoryOptions.some((o) => o.value === id),
+    );
+    if (valid.length > 0) return valid;
+    const fallback = bookingCategoryOptions[0]?.value;
+    return fallback ? [fallback] : [];
+  }, [bookingCategoryOptions, categoryIds]);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -75,6 +83,18 @@ export function NewReservationModal({
     buildInitialDatetime(defaultStartAt),
   );
   const { startDate, startTime, endDate, endTime } = datetime;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isPending) onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, isPending]);
+
+  function handleBackdropClick() {
+    if (!isPending) onClose();
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -87,8 +107,8 @@ export function NewReservationModal({
       setError("選択できるカテゴリがありません");
       return;
     }
-    if (!resolvedCategoryId.length) {
-      setError("カテゴリを選んでください");
+    if (!resolvedCategoryIds.length) {
+      setError("カテゴリを1つ以上選んでください");
       return;
     }
     if (amount !== "" && (Number.isNaN(amount) || amount < 0)) {
@@ -102,7 +122,7 @@ export function NewReservationModal({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || null,
         party_size: partySize,
-        category_id: resolvedCategoryId,
+        category_ids: resolvedCategoryIds,
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
         notes: notes.trim() || null,
@@ -120,12 +140,16 @@ export function NewReservationModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] backdrop-blur-[2px] sm:items-center sm:pb-4 sm:pt-4">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] backdrop-blur-[2px] sm:items-center sm:pb-4 sm:pt-4"
+      onClick={handleBackdropClick}
+    >
       <div
         className="max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom)-2rem))] w-full max-w-[480px] overflow-y-auto overscroll-contain rounded-xl border-[0.5px] border-border bg-bg-primary p-5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-reservation-title"
+        onClick={(e) => e.stopPropagation()}
       >
         <h2
           id="new-reservation-title"
@@ -273,23 +297,14 @@ export function NewReservationModal({
                 予約フォームで選べるカテゴリがありません。オーナーの「カテゴリ」設定で「新規予約フォーム」を有効にしてください。
               </p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {bookingCategoryOptions.map((c) => (
-                  <label
-                    key={c.value}
-                    className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-xs has-[:checked]:border-accent has-[:checked]:bg-bg-hover"
-                  >
-                    <input
-                      type="radio"
-                      name="category"
-                      value={c.value}
-                    checked={resolvedCategoryId === c.value}
-                    onChange={() => setCategoryId(c.value)}
-                    />
-                    {c.label}
-                  </label>
-                ))}
-              </div>
+              <ReservationCategoryPicker
+                options={bookingCategoryOptions}
+                selectedIds={resolvedCategoryIds}
+                onToggle={(id) =>
+                  setCategoryIds((prev) => toggleCategoryId(prev, id))
+                }
+                emptyMessage="予約フォームで選べるカテゴリがありません。オーナーの「カテゴリ」設定で「新規予約フォーム」を有効にしてください。"
+              />
             )}
           </fieldset>
           <div>

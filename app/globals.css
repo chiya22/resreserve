@@ -28,6 +28,10 @@
   --color-reservation-vip-bg: #ede9fe;
   --color-reservation-vip-text: #5b21b6;
   --color-reservation-vip-border: #8b5cf6;
+  /* 複数スペース（カテゴリ）選択時 */
+  --color-reservation-multi-bg: #ffedd5;
+  --color-reservation-multi-text: #9a3412;
+  --color-reservation-multi-border: #f97316;
 }
 
 body {

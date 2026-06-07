@@ -14,7 +14,10 @@ export type Reservation = {
   id: string;
   customerName: string;
   partySize: number;
+  /** 代表カテゴリ（色表示用） */
   categoryId: string;
+  /** 割り当て済みカテゴリ（フィルタ用） */
+  categoryIds: string[];
   paletteKey: ReservationPaletteKey;
   categoryLabel: string;
   startAt: Date;

@@ -27,7 +27,7 @@ import {
 } from "@/lib/calendar/day-layout";
 import { parsePaletteKey } from "@/lib/calendar/palette-key";
 import {
-  RESERVATION_BLOCK_CLASS,
+  getReservationBlockClass,
   RESERVATION_TONE_CLASS,
 } from "@/lib/calendar/reservation-palette-classes";
 import type { Reservation } from "@/lib/calendar/types";
@@ -62,7 +62,7 @@ function DayReservationBlock({
 
   return (
     <div
-      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer touch-manipulation rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
+      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer touch-manipulation rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${getReservationBlockClass(res)}`}
       style={{ top, height }}
       role="button"
       tabIndex={0}
@@ -162,7 +162,9 @@ export function DayCalendarView({
     const guests = list.reduce((s, r) => s + r.partySize, 0);
     const catCounts = new Map<string, number>();
     for (const r of list) {
-      catCounts.set(r.categoryId, (catCounts.get(r.categoryId) ?? 0) + 1);
+      for (const categoryId of r.categoryIds) {
+        catCounts.set(categoryId, (catCounts.get(categoryId) ?? 0) + 1);
+      }
     }
     return { count, guests, catCounts };
   }, [reservations, daySelected]);

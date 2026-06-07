@@ -18,7 +18,7 @@ import {
   calViewSegBtn,
 } from "@/lib/calendar/calendar-toolbar-classes";
 import type { Reservation } from "@/lib/calendar/types";
-import { RESERVATION_TONE_CLASS } from "@/lib/calendar/reservation-palette-classes";
+import { getReservationToneClass } from "@/lib/calendar/reservation-palette-classes";
 import { buildMonthWeeks, isInMonth } from "@/lib/calendar/month-grid";
 import { formatTimeHm } from "@/lib/calendar/datetime-ui";
 import {
@@ -320,7 +320,7 @@ export function MonthCalendarView({
                             e.stopPropagation();
                             onReservationClick(r);
                           }}
-                          className={`min-h-7 max-w-full shrink-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] px-1.5 py-1 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${RESERVATION_TONE_CLASS[r.paletteKey]}`}
+                          className={`min-h-7 max-w-full shrink-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] px-1.5 py-1 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(r)}`}
                         >
                           {formatTimeHm(r.startAt)} {r.customerName}
                         </button>
@@ -369,7 +369,7 @@ export function MonthCalendarView({
                         top,
                         height: MONTH_LANE_H,
                       }}
-                      className={`pointer-events-auto absolute box-border overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${RESERVATION_TONE_CLASS[seg.res.paletteKey]} ${rounded}`}
+                      className={`pointer-events-auto absolute box-border overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(seg.res)} ${rounded}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onReservationClick(seg.res);

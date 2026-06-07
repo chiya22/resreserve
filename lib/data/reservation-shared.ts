@@ -1,9 +1,10 @@
 import { z } from "zod";
 
 import { RESERVATION_WITH_TABLE_EMBED } from "@/lib/data/reservation-select-snippet";
+import { reservationCategoryIds } from "@/lib/calendar/reservation-category-labels";
 import { createClient } from "@/lib/supabase/server";
 import type { Result } from "@/types/result";
-import type { Reservation } from "@/types";
+import type { ReservationWithTable } from "@/types";
 
 export const reservationSelectWithTable = RESERVATION_WITH_TABLE_EMBED;
 
@@ -12,7 +13,9 @@ const reservationInputBaseSchema = z.object({
   customer_name: z.string().min(1, "顧客名を入力してください").max(100),
   customer_phone: z.string().max(20).optional().nullable(),
   party_size: z.number().int().min(1).max(200),
-  category_id: z.string().uuid(),
+  category_ids: z
+    .array(z.string().uuid())
+    .min(1, "カテゴリを1つ以上選んでください"),
   start_at: z.iso.datetime(),
   end_at: z.iso.datetime(),
   notes: z.string().max(500).optional().nullable(),
@@ -50,14 +53,15 @@ export const reservationPartialSchema = reservationInputBaseSchema
     }
   });
 
-export function rowToInput(r: Reservation): ReservationInput {
+export function rowToInput(r: ReservationWithTable): ReservationInput {
   const withAmount = r as unknown as { amount?: number | null };
+
   return {
     table_id: r.table_id,
     customer_name: r.customer_name,
     customer_phone: r.customer_phone,
     party_size: r.party_size,
-    category_id: r.category_id,
+    category_ids: reservationCategoryIds(r),
     start_at: r.start_at,
     end_at: r.end_at,
     notes: r.notes,
@@ -71,14 +75,14 @@ export async function checkBusinessRules(
 ): Promise<Result<void, string>> {
   const supabase = await createClient();
   const excludeId = options?.excludeReservationId;
+  const categoryIds = [...new Set(input.category_ids)];
 
-  const { data: categoryRow, error: catErr } = await supabase
+  const { data: categoryRows, error: catErr } = await supabase
     .from("reservation_categories")
-    .select("blocks_entire_calendar")
-    .eq("id", input.category_id)
-    .maybeSingle();
+    .select("id, blocks_entire_calendar")
+    .in("id", categoryIds);
 
-  if (catErr || !categoryRow) {
+  if (catErr || !categoryRows || categoryRows.length !== categoryIds.length) {
     console.error("checkBusinessRules: invalid category:", catErr);
     return { success: false, error: "カテゴリが無効です" };
   }
@@ -92,7 +96,7 @@ export async function checkBusinessRules(
       .lt("start_at", input.end_at)
       .gt("end_at", input.start_at);
 
-  if (categoryRow.blocks_entire_calendar) {
+  if (categoryRows.some((row) => row.blocks_entire_calendar)) {
     let q = overlapBase();
     if (excludeId) q = q.neq("id", excludeId);
     const { data: conflicts, error } = await q;
