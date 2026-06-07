@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DayCalendarView } from "@/components/calendar/DayCalendarView";
 import { MonthCalendarView } from "@/components/calendar/MonthCalendarView";
@@ -15,6 +15,7 @@ import {
   sortReservationCategories,
 } from "@/lib/calendar/category-display";
 import { HOUR_END } from "@/lib/calendar/calendar-constants";
+import { toggleDayClosed } from "@/lib/data/closed-day-actions";
 import { mapReservationWithTableToCalendar } from "@/lib/calendar/map-supabase-reservation";
 import type { Reservation } from "@/lib/calendar/types";
 import {
@@ -32,6 +33,7 @@ import {
   formatMonthRange,
   startOfLocalDay,
   startOfWeekSunday,
+  localDateKey,
 } from "@/lib/calendar/week";
 import type {
   ClosedDay,
@@ -82,6 +84,7 @@ export function CalendarView({
   initialClosedDays,
 }: CalendarViewProps) {
   const router = useRouter();
+  const [isTogglingDayClosed, startToggleDayClosed] = useTransition();
 
   const categoryLabelById = useMemo(
     () => categoryLabelsById(categoryRows),
@@ -287,6 +290,25 @@ export function CalendarView({
     pushCalendar(new Date(y, m - 1, 1), "month");
   };
 
+  const handleToggleDayClosed = useCallback(() => {
+    if (!staffCanManageClosedDays || isTogglingDayClosed) return;
+
+    const closedOn = localDateKey(daySelected);
+    startToggleDayClosed(async () => {
+      const result = await toggleDayClosed(closedOn);
+      if (!result.success) {
+        window.alert(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }, [
+    staffCanManageClosedDays,
+    isTogglingDayClosed,
+    daySelected,
+    router,
+  ]);
+
   return (
     <>
       <span hidden data-table-count={tables.length} />
@@ -345,6 +367,8 @@ export function CalendarView({
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}
           closedDayByDate={closedDayByDate}
+          onToggleDayClosed={handleToggleDayClosed}
+          isTogglingDayClosed={isTogglingDayClosed}
           onSlotClick={(y) =>
             openSlotNewInternal(daySelected, y, DAY_PX_PER_HOUR)
           }
