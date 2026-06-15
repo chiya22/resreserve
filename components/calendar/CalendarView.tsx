@@ -1,5 +1,6 @@
 "use client";
 
+import { fromZonedTime } from "date-fns-tz";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DayCalendarView } from "@/components/calendar/DayCalendarView";
@@ -14,7 +15,10 @@ import {
   categoryLabelsById,
   sortReservationCategories,
 } from "@/lib/calendar/category-display";
-import { HOUR_END } from "@/lib/calendar/calendar-constants";
+import {
+  CALENDAR_DISPLAY_TIMEZONE,
+  HOUR_END,
+} from "@/lib/calendar/calendar-constants";
 import { mapReservationWithTableToCalendar } from "@/lib/calendar/map-supabase-reservation";
 import type { Reservation } from "@/lib/calendar/types";
 import {
@@ -28,10 +32,14 @@ import {
   slotYToStart,
 } from "@/lib/calendar/datetime-ui";
 import {
+  addCalendarMonths,
   addDays,
+  calendarYmd,
   formatMonthRange,
+  startOfCalendarMonth,
   startOfLocalDay,
   startOfWeekSunday,
+  ymdToStartOfDay,
 } from "@/lib/calendar/week";
 import type {
   ClosedDay,
@@ -45,6 +53,7 @@ export type CalendarViewProps = {
   tables: Table[];
   initialView: "week" | "day" | "month";
   initialDate: string;
+  initialNow: string;
   staffName: string;
   staffIsOwner: boolean;
   staffCanManageClosedDays: boolean;
@@ -53,17 +62,17 @@ export type CalendarViewProps = {
 };
 
 function endOfBusinessDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(HOUR_END, 0, 0, 0);
-  return x;
+  const ymd = calendarYmd(d);
+  return fromZonedTime(
+    `${ymd}T${String(HOUR_END).padStart(2, "0")}:00:00`,
+    CALENDAR_DISPLAY_TIMEZONE,
+  );
 }
 
-function useMinuteClock(): Date {
-  const [now, setNow] = useState(() => new Date());
+function useMinuteClock(initialNowIso: string): Date {
+  const [now, setNow] = useState(() => new Date(initialNowIso));
   useEffect(() => {
-    queueMicrotask(() => {
-      setNow(new Date());
-    });
+    setNow(new Date());
     const id = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(id);
   }, []);
@@ -75,6 +84,7 @@ export function CalendarView({
   tables,
   initialView: view,
   initialDate,
+  initialNow,
   staffName,
   staffIsOwner,
   staffCanManageClosedDays,
@@ -119,8 +129,8 @@ export function CalendarView({
 
   const anchorDate = useMemo(() => {
     const d = new Date(initialDate);
-    return Number.isNaN(d.getTime()) ? new Date() : d;
-  }, [initialDate]);
+    return Number.isNaN(d.getTime()) ? new Date(initialNow) : d;
+  }, [initialDate, initialNow]);
 
   const weekStartSunday = useMemo(
     () => startOfWeekSunday(anchorDate),
@@ -128,7 +138,7 @@ export function CalendarView({
   );
   const daySelected = useMemo(() => startOfLocalDay(anchorDate), [anchorDate]);
   const monthAnchor = useMemo(
-    () => new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1),
+    () => startOfCalendarMonth(anchorDate),
     [anchorDate],
   );
 
@@ -148,7 +158,7 @@ export function CalendarView({
     string | null
   >(null);
 
-  const now = useMinuteClock();
+  const now = useMinuteClock(initialNow);
 
   const { reservations: reservationRows } = useReservationsRealtime({
     initialData: initialReservations,
@@ -184,12 +194,7 @@ export function CalendarView({
   }, [selectedReservationId, reservationRows]);
 
   const weekDays = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, i) => {
-        const d = addDays(weekStartSunday, i);
-        d.setHours(0, 0, 0, 0);
-        return d;
-      }),
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStartSunday, i)),
     [weekStartSunday],
   );
   const closedDayByDate = useMemo(() => {
@@ -247,7 +252,7 @@ export function CalendarView({
     } else {
       d = daySelected;
     }
-    pushCalendar(new Date(d.getFullYear(), d.getMonth(), 1), "month");
+    pushCalendar(startOfCalendarMonth(d), "month");
   };
 
   const onDayHeaderClick = (d: Date) => {
@@ -269,22 +274,16 @@ export function CalendarView({
   const goThisWeek = () => pushCalendar(startOfWeekSunday(new Date()), "week");
 
   const goPrevMonth = () =>
-    pushCalendar(
-      new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() - 1, 1),
-      "month",
-    );
+    pushCalendar(addCalendarMonths(monthAnchor, -1), "month");
   const goNextMonth = () =>
-    pushCalendar(
-      new Date(monthAnchor.getFullYear(), monthAnchor.getMonth() + 1, 1),
-      "month",
-    );
+    pushCalendar(addCalendarMonths(monthAnchor, 1), "month");
   const jumpMonth = (value: string) => {
     const [yText, mText] = value.split("-");
     const y = Number(yText);
     const m = Number(mText);
     if (!Number.isFinite(y) || !Number.isFinite(m)) return;
     if (m < 1 || m > 12) return;
-    pushCalendar(new Date(y, m - 1, 1), "month");
+    pushCalendar(ymdToStartOfDay(`${y}-${String(m).padStart(2, "0")}-01`), "month");
   };
 
   return (

@@ -1,25 +1,12 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 import { CALENDAR_DISPLAY_TIMEZONE } from "@/lib/calendar/calendar-constants";
+import {
+  addCalendarDaysYmd,
+  sundayYmdOfWeekContaining,
+} from "@/lib/calendar/week";
 
 type View = "day" | "week" | "month";
-
-function addCalendarDaysYmd(ymd: string, deltaDays: number, tz: string): string {
-  const [y, m, d] = ymd.split("-").map(Number) as [number, number, number];
-  const noonUtc = fromZonedTime(
-    `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}T12:00:00`,
-    tz,
-  );
-  const next = new Date(noonUtc.getTime() + deltaDays * 86_400_000);
-  return formatInTimeZone(next, tz, "yyyy-MM-dd");
-}
-
-/** ISO 曜日 1=月 … 7=日。日曜始まりの週の日曜の ymd を返す */
-function sundayYmdOfWeekContaining(ymd: string, tz: string): string {
-  const i = Number(formatInTimeZone(fromZonedTime(`${ymd}T12:00:00`, tz), tz, "i"));
-  const daysBack = i === 7 ? 0 : i;
-  return addCalendarDaysYmd(ymd, -daysBack, tz);
-}
 
 function daysInCalendarMonth(year: number, month1to12: number): number {
   return new Date(Date.UTC(year, month1to12, 0)).getUTCDate();
@@ -44,8 +31,8 @@ export function getReservationFetchRangeUtc(
 
   if (view === "week") {
     const ymd = formatInTimeZone(anchor, tz, "yyyy-MM-dd");
-    const sun = sundayYmdOfWeekContaining(ymd, tz);
-    const sat = addCalendarDaysYmd(sun, 6, tz);
+    const sun = sundayYmdOfWeekContaining(ymd);
+    const sat = addCalendarDaysYmd(sun, 6);
     return {
       rangeStart: fromZonedTime(`${sun}T00:00:00`, tz),
       rangeEnd: fromZonedTime(`${sat}T23:59:59.999`, tz),
@@ -59,11 +46,10 @@ export function getReservationFetchRangeUtc(
   const firstYmd = `${y}-${mStr}-01`;
   const lastYmd = `${y}-${mStr}-${String(lastD).padStart(2, "0")}`;
 
-  const monthStartSunday = sundayYmdOfWeekContaining(firstYmd, tz);
+  const monthStartSunday = sundayYmdOfWeekContaining(firstYmd);
   const monthEndSaturday = addCalendarDaysYmd(
-    sundayYmdOfWeekContaining(lastYmd, tz),
+    sundayYmdOfWeekContaining(lastYmd),
     6,
-    tz,
   );
 
   return {

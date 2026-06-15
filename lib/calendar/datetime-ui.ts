@@ -1,4 +1,10 @@
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+
 import { HOUR_END, HOUR_START } from "./calendar-constants";
+import { CALENDAR_DISPLAY_TIMEZONE } from "./calendar-constants";
+import { calendarYmd } from "./week";
+
+const TZ = CALENDAR_DISPLAY_TIMEZONE;
 
 export function addMinutes(d: Date, mins: number): Date {
   return new Date(d.getTime() + mins * 60 * 1000);
@@ -9,15 +15,29 @@ function roundToNearest30(d: Date): Date {
   return new Date(Math.round(d.getTime() / ms) * ms);
 }
 
+function calendarMinutesOfDay(d: Date): number {
+  const h = Number(formatInTimeZone(d, TZ, "H"));
+  const m = Number(formatInTimeZone(d, TZ, "m"));
+  return h * 60 + m;
+}
+
+function minutesToZonedDate(ymd: string, totalMinutes: number): Date {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return fromZonedTime(
+    `${ymd}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`,
+    TZ,
+  );
+}
+
 function clampStartToGrid(d: Date): Date {
-  const x = new Date(d);
-  let mins = x.getHours() * 60 + x.getMinutes();
+  const ymd = calendarYmd(d);
+  let mins = calendarMinutesOfDay(d);
   mins = Math.round(mins / 30) * 30;
   const lo = HOUR_START * 60;
   const hi = HOUR_END * 60 - 30;
   mins = Math.max(lo, Math.min(hi, mins));
-  x.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
-  return x;
+  return minutesToZonedDate(ymd, mins);
 }
 
 /** 業務時間内に丸めた開始・終了（終了は開始+90分を上限 22:00 でクリップ） */
@@ -37,52 +57,36 @@ export function defaultNewReservationRangeForDay(day: Date): {
   start: Date;
   end: Date;
 } {
-  const ref = new Date(
-    day.getFullYear(),
-    day.getMonth(),
-    day.getDate(),
-    12,
-    0,
-    0,
-    0,
-  );
+  const ymd = calendarYmd(day);
+  const ref = fromZonedTime(`${ymd}T12:00:00`, TZ);
   return defaultNewReservationRange(ref);
 }
 
 export function slotYToStart(day: Date, offsetY: number, pxPerHour: number): Date {
+  const ymd = calendarYmd(day);
   const minutesFromGridStart = (offsetY / pxPerHour) * 60;
-  let total =
-    HOUR_START * 60 + minutesFromGridStart;
+  let total = HOUR_START * 60 + minutesFromGridStart;
   total = Math.round(total / 30) * 30;
   const minStart = HOUR_START * 60;
   const maxStart = HOUR_END * 60 - 30;
   total = Math.max(minStart, Math.min(maxStart, total));
-  const d = new Date(day);
-  d.setHours(0, 0, 0, 0);
-  d.setHours(Math.floor(total / 60), total % 60, 0, 0);
-  return d;
+  return minutesToZonedDate(ymd, total);
 }
 
 function endOfGridDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(HOUR_END, 0, 0, 0);
-  return x;
+  const ymd = calendarYmd(d);
+  return fromZonedTime(`${ymd}T${String(HOUR_END).padStart(2, "0")}:00:00`, TZ);
 }
 
 export function toDateInputValue(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return calendarYmd(d);
 }
 
 export function toTimeSelectValue(d: Date): string {
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
+  return formatInTimeZone(d, TZ, "HH:mm");
 }
 
-/** ローカル時刻を HH:mm で返す（カレンダー表示用） */
+/** 店舗暦（Asia/Tokyo）の HH:mm */
 export function formatTimeHm(d: Date): string {
   return toTimeSelectValue(d);
 }
@@ -93,8 +97,5 @@ export function formatHmRange(startAt: Date, endAt: Date): string {
 }
 
 export function parseDateAndTime(dateStr: string, timeStr: string): Date {
-  const [yy, mo, dd] = dateStr.split("-").map(Number);
-  const [th, tm] = timeStr.split(":").map(Number);
-  const d = new Date(yy, mo - 1, dd, th, tm, 0, 0);
-  return d;
+  return fromZonedTime(`${dateStr}T${timeStr}:00`, TZ);
 }

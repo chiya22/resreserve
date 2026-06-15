@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { calendarTodayYmd } from "@/lib/calendar/week";
 import {
   createClosedDay,
   deleteClosedDay,
@@ -22,7 +23,7 @@ export function ClosedDaysManager({ initialRows }: ClosedDaysManagerProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = calendarTodayYmd();
   const visibleRows = rows.filter((row) => row.closed_on >= today);
 
   function handleCreate() {

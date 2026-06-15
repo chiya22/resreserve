@@ -42,6 +42,7 @@ export default async function CalendarPage({
   ]);
 
   const dateKey = safeBase.toISOString();
+  const serverNow = new Date().toISOString();
 
   return (
     <CalendarView
@@ -50,6 +51,7 @@ export default async function CalendarPage({
       tables={tables}
       initialView={view}
       initialDate={dateKey}
+      initialNow={serverNow}
       staffName={staff.name}
       staffIsOwner={staff.role === "owner"}
       staffCanManageClosedDays={

@@ -1,5 +1,15 @@
+import { formatInTimeZone } from "date-fns-tz";
+
+import { CALENDAR_DISPLAY_TIMEZONE } from "./calendar-constants";
 import type { Reservation } from "./types";
 import { isSameLocalDay } from "./week";
+
+function calendarMinutesSinceMidnight(d: Date): number {
+  const h = Number(formatInTimeZone(d, CALENDAR_DISPLAY_TIMEZONE, "H"));
+  const m = Number(formatInTimeZone(d, CALENDAR_DISPLAY_TIMEZONE, "m"));
+  const s = Number(formatInTimeZone(d, CALENDAR_DISPLAY_TIMEZONE, "s"));
+  return h * 60 + m + s / 60;
+}
 
 export const DAY_HOUR_START = 11;
 export const DAY_HOUR_END = 22;
@@ -52,9 +62,8 @@ export function computeOverlapLayouts(
   for (const res of reservations) {
     if (!isSameLocalDay(res.startAt, day)) continue;
 
-    const startMin =
-      res.startAt.getHours() * 60 + res.startAt.getMinutes();
-    const endMin = res.endAt.getHours() * 60 + res.endAt.getMinutes();
+    const startMin = calendarMinutesSinceMidnight(res.startAt);
+    const endMin = calendarMinutesSinceMidnight(res.endAt);
 
     const clampedStart = Math.max(startMin, gridStartMin);
     const clampedEnd = Math.min(endMin, gridEndMin);
@@ -135,8 +144,7 @@ export function computeWeekOverlapLayouts(
 /** 今日表示中のみ。グリッド外は null */
 export function nowMarkerTopPx(now: Date, day: Date): number | null {
   if (!isSameLocalDay(now, day)) return null;
-  const mins =
-    now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+  const mins = calendarMinutesSinceMidnight(now);
   if (mins < GRID_START_MIN || mins > GRID_END_MIN) return null;
   return ((mins - GRID_START_MIN) / 60) * DAY_PX_PER_HOUR;
 }

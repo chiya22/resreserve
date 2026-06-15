@@ -21,7 +21,7 @@ import { formatHmRange } from "@/lib/calendar/datetime-ui";
 import { RESERVATION_BLOCK_CLASS } from "@/lib/calendar/reservation-palette-classes";
 import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
-import { isSameLocalDay, localDateKey, weekdayLabelJa } from "@/lib/calendar/week";
+import { isSameLocalDay, localDateKey, weekdayLabelJa, calendarDayOfMonth } from "@/lib/calendar/week";
 
 function groupByLane(layouts: DayOverlapLayout[]): DayOverlapLayout[][] {
   if (layouts.length === 0) return [[]];
@@ -259,11 +259,11 @@ export function WeekCalendarPanel({
                       <span className="relative inline-flex items-center justify-center">
                         {isToday ? (
                           <span className="flex h-9 w-9 min-h-9 min-w-9 items-center justify-center rounded-full bg-accent text-xs font-medium leading-none text-white">
-                            {d.getDate()}
+                            {calendarDayOfMonth(d)}
                           </span>
                         ) : (
                           <span className="flex min-h-9 min-w-9 items-center justify-center text-xs font-medium leading-none text-text-primary">
-                            {d.getDate()}
+                            {calendarDayOfMonth(d)}
                           </span>
                         )}
                         {isClosedDay ? <ClosedDayMobileBadge isToday={isToday} /> : null}

@@ -25,7 +25,7 @@ import {
   isMultiDayReservation,
 } from "@/lib/calendar/month-span-layout";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
-import { isSameLocalDay, localDateKey } from "@/lib/calendar/week";
+import { isSameLocalDay, localDateKey, calendarDayOfMonth, calendarYearMonth } from "@/lib/calendar/week";
 
 const WEEK_HEADER = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
@@ -69,7 +69,8 @@ function singleDayOnCell(res: Reservation, cell: Date): boolean {
 }
 
 function monthTitle(d: Date): string {
-  return `${d.getFullYear()}年${d.getMonth() + 1}月`;
+  const { year, month } = calendarYearMonth(d);
+  return `${year}年${month}月`;
 }
 
 export function MonthCalendarView({
@@ -111,9 +112,8 @@ export function MonthCalendarView({
     [weeks, reservations],
   );
   const monthInputValue = useMemo(() => {
-    const y = monthAnchor.getFullYear();
-    const m = String(monthAnchor.getMonth() + 1).padStart(2, "0");
-    return `${y}-${m}`;
+    const { year, month } = calendarYearMonth(monthAnchor);
+    return `${year}-${String(month).padStart(2, "0")}`;
   }, [monthAnchor]);
 
   const openMonthPicker = () => {
@@ -291,8 +291,8 @@ export function MonthCalendarView({
                         type="button"
                         aria-label={
                           isClosedDay
-                            ? `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日の日表示（休業日）`
-                            : `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日の日表示`
+                            ? `${calendarYearMonth(date).year}年${calendarYearMonth(date).month}月${calendarDayOfMonth(date)}日の日表示（休業日）`
+                            : `${calendarYearMonth(date).year}年${calendarYearMonth(date).month}月${calendarDayOfMonth(date)}日の日表示`
                         }
                         onClick={(e) => {
                           e.stopPropagation();
@@ -311,7 +311,7 @@ export function MonthCalendarView({
                                     : "font-medium text-[#D1D5DB]"
                               }`}
                             >
-                              {date.getDate()}
+                              {calendarDayOfMonth(date)}
                             </span>
                             {isClosedDay ? (
                               <ClosedDayMobileBadge isToday={isToday} />

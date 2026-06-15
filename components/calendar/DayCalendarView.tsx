@@ -32,7 +32,8 @@ import {
 } from "@/lib/calendar/reservation-palette-classes";
 import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
-import { isSameLocalDay, localDateKey, weekdayLabelJa } from "@/lib/calendar/week";
+import { formatTimeHm } from "@/lib/calendar/datetime-ui";
+import { isSameLocalDay, localDateKey, weekdayLabelJa, calendarDayOfMonth, calendarYearMonth } from "@/lib/calendar/week";
 
 const HOUR_COUNT = DAY_HOUR_END - DAY_HOUR_START;
 const GRID_BODY_PX = HOUR_COUNT * DAY_PX_PER_HOUR;
@@ -40,12 +41,6 @@ const HOUR_ROWS = Array.from(
   { length: HOUR_COUNT },
   (_, i) => DAY_HOUR_START + i,
 ) as number[];
-
-function formatTimeHM(d: Date): string {
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
-}
 
 function DayReservationBlock({
   res,
@@ -78,7 +73,7 @@ function DayReservationBlock({
       }}
     >
       <div className="text-[10px] leading-tight opacity-75">
-        {formatTimeHM(res.startAt)}
+        {formatTimeHm(res.startAt)}
       </div>
       <div className="text-xs font-medium leading-tight text-current">
         {res.customerName}
@@ -186,8 +181,7 @@ export function DayCalendarView({
   const isTitleToday = isSameLocalDay(daySelected, now);
   const dayKey = localDateKey(daySelected);
   const isClosedDay = closedDayByDate.has(dayKey);
-  const y = daySelected.getFullYear();
-  const mo = daySelected.getMonth() + 1;
+  const { year: y, month: mo } = calendarYearMonth(daySelected);
   const wd = weekdayLabelJa(daySelected);
 
   return (
@@ -211,7 +205,7 @@ export function DayCalendarView({
               {isTitleToday ? (
                 <span className="relative inline-flex items-center justify-center">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
-                    {daySelected.getDate()}
+                    {calendarDayOfMonth(daySelected)}
                   </span>
                   {isClosedDay ? (
                     <ClosedDayMobileBadge isToday={true} />
@@ -220,7 +214,7 @@ export function DayCalendarView({
               ) : (
                 <span className="relative inline-flex items-center justify-center">
                   <span className="flex min-h-9 min-w-9 items-center justify-center">
-                    {daySelected.getDate()}
+                    {calendarDayOfMonth(daySelected)}
                   </span>
                   {isClosedDay ? (
                     <ClosedDayMobileBadge isToday={false} />
