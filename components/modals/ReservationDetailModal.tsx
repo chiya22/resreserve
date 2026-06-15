@@ -8,18 +8,26 @@ import {
   type FormEvent,
 } from "react";
 
-import { editModeCategoryChoicesForId } from "@/lib/calendar/category-display";
+import { editModeCategoryChoicesForIds } from "@/lib/calendar/category-display";
+import {
+  reservationCategoryIds,
+  reservationCategoryLabelsText,
+} from "@/lib/calendar/reservation-category-labels";
 import {
   parseDateAndTime,
   toDateInputValue,
   toTimeSelectValue,
 } from "@/lib/calendar/datetime-ui";
 import { parsePaletteKey } from "@/lib/calendar/palette-key";
-import { RESERVATION_TONE_CLASS } from "@/lib/calendar/reservation-palette-classes";
+import { getReservationToneClass } from "@/lib/calendar/reservation-palette-classes";
 import {
   cancelReservation,
   updateReservation,
 } from "@/lib/data/reservation-actions";
+import {
+  ReservationCategoryPicker,
+  toggleCategoryId,
+} from "@/components/modals/ReservationCategoryPicker";
 import type { ReservationWithTable } from "@/types";
 
 export type ReservationDetailModalProps = {
@@ -61,7 +69,9 @@ export function ReservationDetailModal({
     reservation.customer_phone ?? "",
   );
   const [partySize, setPartySize] = useState(reservation.party_size);
-  const [categoryId, setCategoryId] = useState<string>(reservation.category_id);
+  const [categoryIds, setCategoryIds] = useState<string[]>(() =>
+    reservationCategoryIds(reservation),
+  );
   const [amount, setAmount] = useState<number | "">(
     (reservation as unknown as { amount?: number | null }).amount ?? "",
   );
@@ -79,6 +89,11 @@ export function ReservationDetailModal({
     toTimeSelectValue(new Date(reservation.end_at)),
   );
 
+  const reservationCategoryKey = useMemo(
+    () => reservationCategoryIds(reservation).join(","),
+    [reservation],
+  );
+
   /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect --
      別予約切替・Realtime 更新時のみ id / updated_at でフォーム全体を同期 */
   useEffect(() => {
@@ -87,7 +102,7 @@ export function ReservationDetailModal({
     setCustomerName(reservation.customer_name);
     setCustomerPhone(reservation.customer_phone ?? "");
     setPartySize(reservation.party_size);
-    setCategoryId(reservation.category_id);
+    setCategoryIds(reservationCategoryIds(reservation));
     setNotes(reservation.notes ?? "");
     setStartDate(toDateInputValue(new Date(reservation.start_at)));
     setStartTime(toTimeSelectValue(new Date(reservation.start_at)));
@@ -96,20 +111,16 @@ export function ReservationDetailModal({
     setAmount(
       (reservation as unknown as { amount?: number | null }).amount ?? "",
     );
-  }, [reservation.id, reservation.updated_at]);
+  }, [reservation.id, reservation.updated_at, reservationCategoryKey]);
   /* eslint-enable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
 
   const categoryChoices = useMemo(() => {
-    return editModeCategoryChoicesForId(
-      reservation.category_id,
+    return editModeCategoryChoicesForIds(
+      reservationCategoryIds(reservation),
       bookingCategoryOptions,
       categoryLabelById,
     );
-  }, [
-    reservation.category_id,
-    bookingCategoryOptions,
-    categoryLabelById,
-  ]);
+  }, [reservation, bookingCategoryOptions, categoryLabelById]);
 
   function handleCancelReservation() {
     setError(null);
@@ -135,12 +146,17 @@ export function ReservationDetailModal({
       return;
     }
 
+    if (categoryIds.length === 0) {
+      setError("カテゴリを1つ以上選んでください");
+      return;
+    }
+
     startTransition(async () => {
       const result = await updateReservation(reservation.id, {
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || null,
         party_size: partySize,
-        category_id: categoryId,
+        category_ids: categoryIds,
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
         notes: notes.trim() || null,
@@ -158,24 +174,41 @@ export function ReservationDetailModal({
   const startD = new Date(reservation.start_at);
   const endD = new Date(reservation.end_at);
 
-  const viewBadgeTone = RESERVATION_TONE_CLASS[
-    parsePaletteKey(cat.palette_key)
-  ];
+  const viewBadgeTone = getReservationToneClass({
+    paletteKey: parsePaletteKey(cat.palette_key),
+    categoryIds: reservationCategoryIds(reservation),
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isPending) onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, isPending]);
+
+  function handleBackdropClick() {
+    if (!isPending) onClose();
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] backdrop-blur-[2px] sm:items-center sm:pb-4 sm:pt-4">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-[max(0.75rem,env(safe-area-inset-top,0px))] backdrop-blur-[2px] sm:items-center sm:pb-4 sm:pt-4"
+      onClick={handleBackdropClick}
+    >
       <div
         className="relative max-h-[min(92dvh,calc(100dvh-env(safe-area-inset-bottom)-2rem))] w-full max-w-[440px] overflow-y-auto overscroll-contain rounded-xl border-[0.5px] border-border bg-bg-primary shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="detail-reservation-title"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2 border-b border-border px-5 py-3">
           <span
             id="detail-reservation-title"
             className={`inline-flex max-w-full items-center rounded-xl px-2.5 py-1 text-[11px] font-medium ${viewBadgeTone}`}
           >
-            {cat.label}
+            {reservationCategoryLabelsText(reservation)}
           </span>
           <button
             type="button"
@@ -329,21 +362,13 @@ export function ReservationDetailModal({
                 <legend className="mb-1 text-xs text-text-tertiary">
                   カテゴリ
                 </legend>
-                <div className="flex flex-wrap gap-2">
-                  {categoryChoices.map((c) => (
-                    <label
-                      key={c.value}
-                      className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-xs has-[:checked]:border-accent"
-                    >
-                      <input
-                        type="radio"
-                        checked={categoryId === c.value}
-                        onChange={() => setCategoryId(c.value)}
-                      />
-                      {c.label}
-                    </label>
-                  ))}
-                </div>
+                <ReservationCategoryPicker
+                  options={categoryChoices}
+                  selectedIds={categoryIds}
+                  onToggle={(id) =>
+                    setCategoryIds((prev) => toggleCategoryId(prev, id))
+                  }
+                />
               </fieldset>
               <div>
                 <label className="mb-1 block text-xs text-text-tertiary">
@@ -362,28 +387,30 @@ export function ReservationDetailModal({
                 {error}
               </p>
             ) : null}
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setMode("view")}
-                className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
-              >
-                戻る
-              </button>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => setMode("confirm-delete")}
-                className="inline-flex min-h-11 min-w-[5.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-reservation-waitlist-border bg-reservation-waitlist-bg px-4 py-2.5 text-sm text-reservation-waitlist-text hover:opacity-90 touch-manipulation active:scale-[0.97]"
               >
-                キャンセル
+                予約をキャンセル
               </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="inline-flex min-h-11 min-w-[5rem] items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm text-white hover:bg-[#3B7DE8] disabled:opacity-50 touch-manipulation active:scale-[0.97]"
-              >
-                {isPending ? "保存中…" : "保存"}
-              </button>
+              <div className="flex flex-wrap justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMode("view")}
+                  className="inline-flex min-h-11 min-w-[4.5rem] items-center justify-center rounded-lg border border-border px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-hover touch-manipulation active:scale-[0.97]"
+                >
+                  戻る
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="inline-flex min-h-11 min-w-[5rem] items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm text-white hover:bg-[#3B7DE8] disabled:opacity-50 touch-manipulation active:scale-[0.97]"
+                >
+                  {isPending ? "保存中…" : "保存"}
+                </button>
+              </div>
             </div>
           </form>
         ) : (
@@ -420,7 +447,9 @@ export function ReservationDetailModal({
               </div>
               <div className="flex gap-2">
                 <span className="w-20 shrink-0 text-text-tertiary">カテゴリ</span>
-                <span className="text-text-primary">{cat.label}</span>
+                <span className="text-text-primary">
+                  {reservationCategoryLabelsText(reservation)}
+                </span>
               </div>
               {reservation.notes ? (
                 <div className="flex gap-2">

@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentStaff } from "@/lib/data/auth";
 import {
+  resolvePrimaryCategoryId,
+  syncReservationCategoryAssignments,
+} from "@/lib/data/reservation-category-assignments";
+import {
   checkBusinessRules,
   reservationInputSchema,
   reservationPartialSchema,
@@ -44,13 +48,20 @@ export async function createReservation(
   if (!rules.success) return rules;
 
   const supabase = await createClient();
+  const primaryCategoryId = await resolvePrimaryCategoryId(
+    supabase,
+    parsed.data.category_ids,
+  );
+  if (!primaryCategoryId) {
+    return err("カテゴリが無効です");
+  }
 
   const values: Record<string, unknown> = {
     table_id: parsed.data.table_id,
     customer_name: parsed.data.customer_name,
     customer_phone: parsed.data.customer_phone ?? null,
     party_size: parsed.data.party_size,
-    category_id: parsed.data.category_id,
+    category_id: primaryCategoryId,
     start_at: parsed.data.start_at,
     end_at: parsed.data.end_at,
     notes: parsed.data.notes ?? null,
@@ -81,8 +92,30 @@ export async function createReservation(
     return err("予約の作成に失敗しました");
   }
 
+  const created = data as ReservationWithTable;
+  const syncResult = await syncReservationCategoryAssignments(
+    supabase,
+    created.id,
+    parsed.data.category_ids,
+  );
+  if (!syncResult.ok) {
+    return err(syncResult.error);
+  }
+
+  const { data: refetched, error: refetchError } = await supabase
+    .from("reservations")
+    .select(reservationSelectWithTable)
+    .eq("id", created.id)
+    .single();
+
+  if (refetchError || !refetched) {
+    console.error("Failed to refetch reservation after category sync:", refetchError);
+    revalidatePath("/calendar");
+    return ok(created);
+  }
+
   revalidatePath("/calendar");
-  const typed = data as ReservationWithTable;
+  const typed = refetched as ReservationWithTable;
   const actor = await getCurrentStaff();
   queueOwnerNotify(notifyReservationCreated(typed, actor));
   return ok(typed);
@@ -141,7 +174,16 @@ export async function updateReservation(
   if (p.customer_name !== undefined) patch.customer_name = p.customer_name;
   if (p.customer_phone !== undefined) patch.customer_phone = p.customer_phone;
   if (p.party_size !== undefined) patch.party_size = p.party_size;
-  if (p.category_id !== undefined) patch.category_id = p.category_id;
+  if (p.category_ids !== undefined) {
+    const primaryCategoryId = await resolvePrimaryCategoryId(
+      supabase,
+      p.category_ids,
+    );
+    if (!primaryCategoryId) {
+      return err("カテゴリが無効です");
+    }
+    patch.category_id = primaryCategoryId;
+  }
   if (p.start_at !== undefined) patch.start_at = p.start_at;
   if (p.end_at !== undefined) patch.end_at = p.end_at;
   if (p.notes !== undefined) patch.notes = p.notes;
@@ -150,27 +192,61 @@ export async function updateReservation(
     (patch as { amount?: number | null }).amount = p.amount ?? null;
   }
 
-  if (Object.keys(patch).length === 0) {
+  const categoryIdsToSync = p.category_ids;
+
+  if (Object.keys(patch).length === 0 && categoryIdsToSync === undefined) {
     return ok(row);
   }
 
-  const { data, error } = await supabase
+  if (Object.keys(patch).length > 0) {
+    const { data, error } = await supabase
+      .from("reservations")
+      .update(patch as never)
+      .eq("id", id)
+      .select(reservationSelectWithTable)
+      .single();
+
+    if (error) {
+      console.error("Failed to update reservation:", error);
+      if (error.code === "23P01") {
+        return err("この時間帯はすでに予約が入っています");
+      }
+      return err("予約の更新に失敗しました");
+    }
+
+    if (!categoryIdsToSync) {
+      revalidatePath("/calendar");
+      const typed = data as ReservationWithTable;
+      const actor = await getCurrentStaff();
+      queueOwnerNotify(notifyReservationUpdated(row, typed, actor));
+      return ok(typed);
+    }
+  }
+
+  if (categoryIdsToSync) {
+    const syncResult = await syncReservationCategoryAssignments(
+      supabase,
+      id,
+      categoryIdsToSync,
+    );
+    if (!syncResult.ok) {
+      return err(syncResult.error);
+    }
+  }
+
+  const { data: refetched, error: refetchError } = await supabase
     .from("reservations")
-    .update(patch as never)
-    .eq("id", id)
     .select(reservationSelectWithTable)
+    .eq("id", id)
     .single();
 
-  if (error) {
-    console.error("Failed to update reservation:", error);
-    if (error.code === "23P01") {
-      return err("この時間帯はすでに予約が入っています");
-    }
+  if (refetchError || !refetched) {
+    console.error("Failed to refetch reservation after update:", refetchError);
     return err("予約の更新に失敗しました");
   }
 
   revalidatePath("/calendar");
-  const typed = data as ReservationWithTable;
+  const typed = refetched as ReservationWithTable;
   const actor = await getCurrentStaff();
   queueOwnerNotify(notifyReservationUpdated(row, typed, actor));
   return ok(typed);

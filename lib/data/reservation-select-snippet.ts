@@ -24,6 +24,18 @@ export const RESERVATION_WITH_TABLE_EMBED = `
     show_in_booking_form,
     sort_order
   ),
+  reservation_category_assignments (
+    category_id,
+    reservation_categories (
+      id,
+      code,
+      label,
+      palette_key,
+      blocks_entire_calendar,
+      show_in_booking_form,
+      sort_order
+    )
+  ),
   table:tables (
     id,
     name,

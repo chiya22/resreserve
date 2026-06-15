@@ -27,7 +27,7 @@ import {
 } from "@/lib/calendar/day-layout";
 import { parsePaletteKey } from "@/lib/calendar/palette-key";
 import {
-  RESERVATION_BLOCK_CLASS,
+  getReservationBlockClass,
   RESERVATION_TONE_CLASS,
 } from "@/lib/calendar/reservation-palette-classes";
 import type { Reservation } from "@/lib/calendar/types";
@@ -57,7 +57,7 @@ function DayReservationBlock({
 
   return (
     <div
-      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer touch-manipulation rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
+      className={`pointer-events-auto absolute left-0 right-0 z-[5] cursor-pointer touch-manipulation rounded-md border-l-[3px] border-solid border-y-0 border-r-0 px-2 py-[5px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] ${getReservationBlockClass(res)}`}
       style={{ top, height }}
       role="button"
       tabIndex={0}
@@ -117,6 +117,8 @@ export type DayCalendarViewProps = {
   onSelectViewWeek: () => void;
   onSelectViewMonth: () => void;
   closedDayByDate: Map<string, string | null>;
+  onToggleDayClosed?: () => void;
+  isTogglingDayClosed?: boolean;
   onSlotClick: (offsetY: number) => void;
   onReservationClick: (r: Reservation) => void;
 };
@@ -142,6 +144,8 @@ export function DayCalendarView({
   onSelectViewWeek,
   onSelectViewMonth,
   closedDayByDate,
+  onToggleDayClosed,
+  isTogglingDayClosed = false,
   onSlotClick,
   onReservationClick,
 }: DayCalendarViewProps) {
@@ -153,7 +157,9 @@ export function DayCalendarView({
     const guests = list.reduce((s, r) => s + r.partySize, 0);
     const catCounts = new Map<string, number>();
     for (const r of list) {
-      catCounts.set(r.categoryId, (catCounts.get(r.categoryId) ?? 0) + 1);
+      for (const categoryId of r.categoryIds) {
+        catCounts.set(categoryId, (catCounts.get(categoryId) ?? 0) + 1);
+      }
     }
     return { count, guests, catCounts };
   }, [reservations, daySelected]);
@@ -199,9 +205,6 @@ export function DayCalendarView({
           <div className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-0.5 text-center text-[17px] font-medium leading-none text-text-primary sm:flex-none">
             <span>{y}年{mo}月</span>
             <span className="relative mx-0.5 inline-flex items-center gap-1">
-              {isClosedDay ? (
-                <span className="sr-only sm:hidden">休業日</span>
-              ) : null}
               {isTitleToday ? (
                 <span className="relative inline-flex items-center justify-center">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-medium text-white">
@@ -221,13 +224,14 @@ export function DayCalendarView({
                   ) : null}
                 </span>
               )}
-              {isClosedDay ? (
-                <span className="hidden text-[11px] font-medium leading-none text-reservation-waitlist-text sm:inline">
-                  休業日
-                </span>
-              ) : null}
+              <span>日</span>
             </span>
-            <span>日（{wd}）</span>
+            <span>（{wd}）</span>
+            {isClosedDay ? (
+              <span className="text-[11px] font-medium leading-none text-reservation-waitlist-text sm:text-[17px]">
+                休業日
+              </span>
+            ) : null}
           </div>
           <button
             type="button"
@@ -251,6 +255,20 @@ export function DayCalendarView({
               <span className="sm:hidden">＋ 新規</span>
               <span className="hidden sm:inline">＋ 新規予約</span>
             </button>
+            {staffCanManageClosedDays && onToggleDayClosed ? (
+              <button
+                type="button"
+                onClick={onToggleDayClosed}
+                disabled={isTogglingDayClosed}
+                className={`inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-md border-[0.5px] px-4 text-xs transition-transform duration-100 active:scale-[0.97] touch-manipulation disabled:opacity-50 ${
+                  isClosedDay
+                    ? "border-border text-text-secondary hover:bg-bg-hover"
+                    : "border-reservation-waitlist-border bg-reservation-waitlist-bg text-reservation-waitlist-text hover:opacity-[0.82]"
+                }`}
+              >
+                {isClosedDay ? "営業日にする" : "休業日にする"}
+              </button>
+            ) : null}
             <nav
               className="flex items-center gap-1"
               aria-label="カレンダー表示切り替え"

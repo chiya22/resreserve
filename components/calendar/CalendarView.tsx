@@ -1,7 +1,13 @@
 "use client";
 
 import { fromZonedTime } from "date-fns-tz";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import { DayCalendarView } from "@/components/calendar/DayCalendarView";
 import { MonthCalendarView } from "@/components/calendar/MonthCalendarView";
@@ -19,6 +25,7 @@ import {
   CALENDAR_DISPLAY_TIMEZONE,
   HOUR_END,
 } from "@/lib/calendar/calendar-constants";
+import { toggleDayClosed } from "@/lib/data/closed-day-actions";
 import { mapReservationWithTableToCalendar } from "@/lib/calendar/map-supabase-reservation";
 import type { Reservation } from "@/lib/calendar/types";
 import {
@@ -39,6 +46,7 @@ import {
   startOfCalendarMonth,
   startOfLocalDay,
   startOfWeekSunday,
+  localDateKey,
   ymdToStartOfDay,
 } from "@/lib/calendar/week";
 import type {
@@ -92,6 +100,7 @@ export function CalendarView({
   initialClosedDays,
 }: CalendarViewProps) {
   const router = useRouter();
+  const [isTogglingDayClosed, startToggleDayClosed] = useTransition();
 
   const categoryLabelById = useMemo(
     () => categoryLabelsById(categoryRows),
@@ -171,7 +180,9 @@ export function CalendarView({
   const filteredReservations = useMemo(() => {
     if (categoryFilterIds.length === 0) return reservations;
     const selected = new Set(categoryFilterIds);
-    return reservations.filter((r) => selected.has(r.categoryId));
+    return reservations.filter((r) =>
+      r.categoryIds.some((id) => selected.has(id)),
+    );
   }, [reservations, categoryFilterIds]);
 
   const toggleCategoryFilter = useCallback((categoryId: string) => {
@@ -286,6 +297,25 @@ export function CalendarView({
     pushCalendar(ymdToStartOfDay(`${y}-${String(m).padStart(2, "0")}-01`), "month");
   };
 
+  const handleToggleDayClosed = useCallback(() => {
+    if (!staffCanManageClosedDays || isTogglingDayClosed) return;
+
+    const closedOn = localDateKey(daySelected);
+    startToggleDayClosed(async () => {
+      const result = await toggleDayClosed(closedOn);
+      if (!result.success) {
+        window.alert(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }, [
+    staffCanManageClosedDays,
+    isTogglingDayClosed,
+    daySelected,
+    router,
+  ]);
+
   return (
     <>
       <span hidden data-table-count={tables.length} />
@@ -344,6 +374,8 @@ export function CalendarView({
           onSelectViewWeek={onSelectViewWeek}
           onSelectViewMonth={onSelectViewMonth}
           closedDayByDate={closedDayByDate}
+          onToggleDayClosed={handleToggleDayClosed}
+          isTogglingDayClosed={isTogglingDayClosed}
           onSlotClick={(y) =>
             openSlotNewInternal(daySelected, y, DAY_PX_PER_HOUR)
           }
@@ -387,6 +419,7 @@ export function CalendarView({
             setShowNewModal(false);
             setNewDefaultStart(undefined);
           }}
+          onSuccess={() => router.refresh()}
         />
       ) : null}
 
@@ -396,6 +429,7 @@ export function CalendarView({
           categoryLabelById={categoryLabelById}
           bookingCategoryOptions={bookingCategoryOptions}
           onClose={() => setSelectedReservationId(null)}
+          onUpdated={() => router.refresh()}
         />
       ) : null}
     </>

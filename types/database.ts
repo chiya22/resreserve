@@ -113,6 +113,39 @@ export type Database = {
         }
         Relationships: []
       }
+      reservation_category_assignments: {
+        Row: {
+          category_id: string
+          created_at: string
+          reservation_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          reservation_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          reservation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_category_assignments_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "reservation_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservation_category_assignments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           amount: number | null

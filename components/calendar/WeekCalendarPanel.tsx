@@ -18,7 +18,7 @@ import {
 } from "@/lib/calendar/calendar-toolbar-classes";
 import { type DayOverlapLayout, WEEK_PX_PER_HOUR } from "@/lib/calendar/day-layout";
 import { formatHmRange } from "@/lib/calendar/datetime-ui";
-import { RESERVATION_BLOCK_CLASS } from "@/lib/calendar/reservation-palette-classes";
+import { getReservationBlockClass } from "@/lib/calendar/reservation-palette-classes";
 import type { Reservation } from "@/lib/calendar/types";
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
 import { isSameLocalDay, localDateKey, weekdayLabelJa, calendarDayOfMonth } from "@/lib/calendar/week";
@@ -56,7 +56,7 @@ function WeekReservationBlock({
 }) {
   return (
     <div
-      className={`pointer-events-auto absolute inset-x-[2px] z-[5] min-w-0 cursor-pointer touch-manipulation overflow-hidden rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[4px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] sm:px-[6px] ${RESERVATION_BLOCK_CLASS[res.paletteKey]}`}
+      className={`pointer-events-auto absolute inset-x-[2px] z-[5] min-w-0 cursor-pointer touch-manipulation overflow-hidden rounded-[5px] border-l-[3px] border-solid border-y-0 border-r-0 px-[4px] py-[3px] transition-opacity duration-[120ms] ease-out hover:opacity-[0.82] sm:px-[6px] ${getReservationBlockClass(res)}`}
       style={{
         top: layout.top,
         height: layout.height,

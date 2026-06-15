@@ -117,3 +117,55 @@ export async function deleteClosedDay(id: string): Promise<Result<void, string>>
   revalidateClosedDaysUi();
   return ok(undefined);
 }
+
+const closedOnSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "日付が不正です");
+
+export async function toggleDayClosed(
+  closedOn: string,
+): Promise<Result<{ closed: boolean }, string>> {
+  const maintainer = await requireClosedDayMaintainer();
+  if (!maintainer.success) return maintainer;
+
+  const parsed = closedOnSchema.safeParse(closedOn);
+  if (!parsed.success) return err("日付が不正です");
+
+  const supabase = await createClient();
+  const { data: existing, error: selectError } = await supabase
+    .from("closed_days")
+    .select("id")
+    .eq("closed_on", parsed.data)
+    .maybeSingle();
+
+  if (selectError) {
+    console.error("toggleDayClosed select failed:", selectError);
+    return err("休業日の取得に失敗しました");
+  }
+
+  if (existing) {
+    const { error: deleteError } = await supabase
+      .from("closed_days")
+      .delete()
+      .eq("id", existing.id);
+
+    if (deleteError) {
+      console.error("toggleDayClosed delete failed:", deleteError);
+      return err("休業日の解除に失敗しました");
+    }
+
+    revalidateClosedDaysUi();
+    return ok({ closed: false });
+  }
+
+  const { error: insertError } = await supabase
+    .from("closed_days")
+    .insert({ closed_on: parsed.data });
+
+  if (insertError) {
+    if (insertError.code === "23505") return err("その休業日は既に登録されています");
+    console.error("toggleDayClosed insert failed:", insertError);
+    return err("休業日の登録に失敗しました");
+  }
+
+  revalidateClosedDaysUi();
+  return ok({ closed: true });
+}

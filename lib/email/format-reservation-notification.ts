@@ -4,6 +4,7 @@ import type {
   Staff,
   StaffRole,
 } from "@/types";
+import { reservationCategoryLabelsText } from "@/lib/calendar/reservation-category-labels";
 
 const STAFF_ROLE_JA: Record<StaffRole, string> = {
   owner: "オーナー",
@@ -74,7 +75,12 @@ export function getReservationNotifyChangedLineNumbers(
     changed.add(3);
   }
   if (before.party_size !== after.party_size) changed.add(4);
-  if (before.category_id !== after.category_id) changed.add(5);
+  if (
+    reservationCategoryLabelsText(before) !==
+    reservationCategoryLabelsText(after)
+  ) {
+    changed.add(5);
+  }
   if (statusA !== statusB) changed.add(6);
   if (before.start_at !== after.start_at) changed.add(7);
   if (before.end_at !== after.end_at) changed.add(8);
@@ -102,7 +108,7 @@ function buildIndexedLines(
   highlightLineNumbers: ReadonlySet<number> | undefined,
   lineMarker: string,
 ): string[] {
-  const cat = row.reservation_categories?.label ?? "—";
+  const cat = reservationCategoryLabelsText(row);
   const tableName = row.table?.name ?? "—";
   const phone = normPhone(row.customer_phone);
   const phoneDisplay = phone || "—";
