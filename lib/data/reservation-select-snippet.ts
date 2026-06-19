@@ -6,6 +6,7 @@ export const RESERVATION_WITH_TABLE_EMBED = `
   customer_phone,
   party_size,
   category_id,
+  seating_style,
   status,
   start_at,
   end_at,

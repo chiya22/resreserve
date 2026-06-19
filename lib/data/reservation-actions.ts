@@ -61,6 +61,7 @@ export async function createReservation(
     customer_name: parsed.data.customer_name,
     customer_phone: parsed.data.customer_phone ?? null,
     party_size: parsed.data.party_size,
+    seating_style: parsed.data.seating_style,
     category_id: primaryCategoryId,
     start_at: parsed.data.start_at,
     end_at: parsed.data.end_at,
@@ -174,6 +175,7 @@ export async function updateReservation(
   if (p.customer_name !== undefined) patch.customer_name = p.customer_name;
   if (p.customer_phone !== undefined) patch.customer_phone = p.customer_phone;
   if (p.party_size !== undefined) patch.party_size = p.party_size;
+  if (p.seating_style !== undefined) patch.seating_style = p.seating_style;
   if (p.category_ids !== undefined) {
     const primaryCategoryId = await resolvePrimaryCategoryId(
       supabase,

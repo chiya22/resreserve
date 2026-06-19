@@ -13,6 +13,8 @@ import {
   ReservationCategoryPicker,
   toggleCategoryId,
 } from "@/components/modals/ReservationCategoryPicker";
+import { SeatingStylePicker } from "@/components/modals/SeatingStylePicker";
+import type { ReservationSeatingStyle } from "@/types";
 
 function buildInitialDatetime(defaultStartAt: string | undefined) {
   if (defaultStartAt) {
@@ -77,6 +79,8 @@ export function NewReservationModal({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [partySize, setPartySize] = useState(10);
+  const [seatingStyle, setSeatingStyle] =
+    useState<ReservationSeatingStyle>("standing");
   const [amount, setAmount] = useState<number | "">("");
   const [notes, setNotes] = useState("");
   const [datetime, setDatetime] = useState(() =>
@@ -122,6 +126,7 @@ export function NewReservationModal({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || null,
         party_size: partySize,
+        seating_style: seatingStyle,
         category_ids: resolvedCategoryIds,
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
@@ -208,6 +213,13 @@ export function NewReservationModal({
               className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
             />
           </div>
+          <fieldset>
+            <legend className="mb-1 text-xs text-text-tertiary">立食/着席</legend>
+            <SeatingStylePicker
+              value={seatingStyle}
+              onChange={setSeatingStyle}
+            />
+          </fieldset>
           <div>
             <label
               htmlFor="nr-amount"

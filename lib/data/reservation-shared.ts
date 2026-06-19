@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { RESERVATION_WITH_TABLE_EMBED } from "@/lib/data/reservation-select-snippet";
 import { reservationCategoryIds } from "@/lib/calendar/reservation-category-labels";
+import { RESERVATION_SEATING_STYLES } from "@/lib/reservation/seating-style";
 import { createClient } from "@/lib/supabase/server";
 import type { Result } from "@/types/result";
 import type { ReservationWithTable } from "@/types";
@@ -13,6 +14,7 @@ const reservationInputBaseSchema = z.object({
   customer_name: z.string().min(1, "顧客名を入力してください").max(100),
   customer_phone: z.string().max(20).optional().nullable(),
   party_size: z.number().int().min(1).max(200),
+  seating_style: z.enum(RESERVATION_SEATING_STYLES),
   category_ids: z
     .array(z.string().uuid())
     .min(1, "カテゴリを1つ以上選んでください"),
@@ -61,6 +63,7 @@ export function rowToInput(r: ReservationWithTable): ReservationInput {
     customer_name: r.customer_name,
     customer_phone: r.customer_phone,
     party_size: r.party_size,
+    seating_style: r.seating_style,
     category_ids: reservationCategoryIds(r),
     start_at: r.start_at,
     end_at: r.end_at,

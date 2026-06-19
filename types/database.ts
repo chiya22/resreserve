@@ -159,6 +159,7 @@ export type Database = {
           internal_notes: string | null
           notes: string | null
           party_size: number
+          seating_style: Database["public"]["Enums"]["reservation_seating_style"]
           start_at: string
           status: Database["public"]["Enums"]["reservation_status"]
           table_id: string | null
@@ -176,6 +177,7 @@ export type Database = {
           internal_notes?: string | null
           notes?: string | null
           party_size: number
+          seating_style?: Database["public"]["Enums"]["reservation_seating_style"]
           start_at: string
           status?: Database["public"]["Enums"]["reservation_status"]
           table_id?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           internal_notes?: string | null
           notes?: string | null
           party_size?: number
+          seating_style?: Database["public"]["Enums"]["reservation_seating_style"]
           start_at?: string
           status?: Database["public"]["Enums"]["reservation_status"]
           table_id?: string | null
@@ -289,6 +292,7 @@ export type Database = {
     Enums: {
       notification_channel: "email" | "sms" | "line"
       notification_type: "confirmation" | "reminder" | "cancellation"
+      reservation_seating_style: "standing" | "seated"
       reservation_status:
         | "confirmed"
         | "pending"
@@ -425,6 +429,7 @@ export const Constants = {
     Enums: {
       notification_channel: ["email", "sms", "line"],
       notification_type: ["confirmation", "reminder", "cancellation"],
+      reservation_seating_style: ["standing", "seated"],
       reservation_status: [
         "confirmed",
         "pending",

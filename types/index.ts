@@ -25,6 +25,8 @@ export type ReservationUpdate =
 // ENUM の型
 export type StaffRole = Database["public"]["Enums"]["staff_role"];
 export type ReservationStatus = Database["public"]["Enums"]["reservation_status"];
+export type ReservationSeatingStyle =
+  Database["public"]["Enums"]["reservation_seating_style"];
 export type NotificationChannel =
   Database["public"]["Enums"]["notification_channel"];
 export type NotificationType =

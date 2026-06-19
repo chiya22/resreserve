@@ -19,6 +19,7 @@ import {
   toTimeSelectValue,
 } from "@/lib/calendar/datetime-ui";
 import { parsePaletteKey } from "@/lib/calendar/palette-key";
+import { formatSeatingStyleJa } from "@/lib/reservation/seating-style";
 import { getReservationToneClass } from "@/lib/calendar/reservation-palette-classes";
 import {
   cancelReservation,
@@ -28,7 +29,8 @@ import {
   ReservationCategoryPicker,
   toggleCategoryId,
 } from "@/components/modals/ReservationCategoryPicker";
-import type { ReservationWithTable } from "@/types";
+import { SeatingStylePicker } from "@/components/modals/SeatingStylePicker";
+import type { ReservationSeatingStyle, ReservationWithTable } from "@/types";
 
 export type ReservationDetailModalProps = {
   reservation: ReservationWithTable;
@@ -69,6 +71,9 @@ export function ReservationDetailModal({
     reservation.customer_phone ?? "",
   );
   const [partySize, setPartySize] = useState(reservation.party_size);
+  const [seatingStyle, setSeatingStyle] = useState<ReservationSeatingStyle>(
+    reservation.seating_style ?? "standing",
+  );
   const [categoryIds, setCategoryIds] = useState<string[]>(() =>
     reservationCategoryIds(reservation),
   );
@@ -102,6 +107,7 @@ export function ReservationDetailModal({
     setCustomerName(reservation.customer_name);
     setCustomerPhone(reservation.customer_phone ?? "");
     setPartySize(reservation.party_size);
+    setSeatingStyle(reservation.seating_style ?? "standing");
     setCategoryIds(reservationCategoryIds(reservation));
     setNotes(reservation.notes ?? "");
     setStartDate(toDateInputValue(new Date(reservation.start_at)));
@@ -156,6 +162,7 @@ export function ReservationDetailModal({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim() || null,
         party_size: partySize,
+        seating_style: seatingStyle,
         category_ids: categoryIds,
         start_at: startAt.toISOString(),
         end_at: endAt.toISOString(),
@@ -289,6 +296,16 @@ export function ReservationDetailModal({
                   className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
                 />
               </div>
+              <fieldset>
+                <legend className="mb-1 text-xs text-text-tertiary">
+                  立食/着席
+                </legend>
+                <SeatingStylePicker
+                  value={seatingStyle}
+                  onChange={setSeatingStyle}
+                  name="edit-seating_style"
+                />
+              </fieldset>
               <div>
                 <label className="mb-1 block text-xs text-text-tertiary">
                   予約金額（任意・税込／円）
@@ -426,6 +443,12 @@ export function ReservationDetailModal({
                 <span className="w-20 shrink-0 text-text-tertiary">人数</span>
                 <span className="text-text-primary">
                   {reservation.party_size}名
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <span className="w-20 shrink-0 text-text-tertiary">形式</span>
+                <span className="text-text-primary">
+                  {formatSeatingStyleJa(reservation.seating_style)}
                 </span>
               </div>
               <div className="flex gap-2">

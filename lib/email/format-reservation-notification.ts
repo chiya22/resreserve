@@ -5,6 +5,7 @@ import type {
   StaffRole,
 } from "@/types";
 import { reservationCategoryLabelsText } from "@/lib/calendar/reservation-category-labels";
+import { formatSeatingStyleJa } from "@/lib/reservation/seating-style";
 
 const STAFF_ROLE_JA: Record<StaffRole, string> = {
   owner: "オーナー",
@@ -58,7 +59,7 @@ function formatAmountJa(a: number | null | undefined): string {
   return `${a.toLocaleString("ja-JP")}円（税込）`;
 }
 
-/** 変更前後で値が異なる行番号（1〜12）。通知メールの目印に使用 */
+/** 変更前後で値が異なる行番号（1〜13）。通知メールの目印に使用 */
 export function getReservationNotifyChangedLineNumbers(
   before: ReservationWithTable,
   after: ReservationWithTable,
@@ -75,20 +76,21 @@ export function getReservationNotifyChangedLineNumbers(
     changed.add(3);
   }
   if (before.party_size !== after.party_size) changed.add(4);
+  if (before.seating_style !== after.seating_style) changed.add(5);
   if (
     reservationCategoryLabelsText(before) !==
     reservationCategoryLabelsText(after)
   ) {
-    changed.add(5);
+    changed.add(6);
   }
-  if (statusA !== statusB) changed.add(6);
-  if (before.start_at !== after.start_at) changed.add(7);
-  if (before.end_at !== after.end_at) changed.add(8);
-  if ((before.table_id ?? null) !== (after.table_id ?? null)) changed.add(9);
-  if (normAmount(before.amount) !== normAmount(after.amount)) changed.add(10);
-  if (normNotes(before.notes) !== normNotes(after.notes)) changed.add(11);
+  if (statusA !== statusB) changed.add(7);
+  if (before.start_at !== after.start_at) changed.add(8);
+  if (before.end_at !== after.end_at) changed.add(9);
+  if ((before.table_id ?? null) !== (after.table_id ?? null)) changed.add(10);
+  if (normAmount(before.amount) !== normAmount(after.amount)) changed.add(11);
+  if (normNotes(before.notes) !== normNotes(after.notes)) changed.add(12);
   if (normNotes(before.internal_notes) !== normNotes(after.internal_notes)) {
-    changed.add(12);
+    changed.add(13);
   }
 
   return changed;
@@ -121,14 +123,15 @@ function buildIndexedLines(
     [2, `2. 顧客名: ${row.customer_name}`],
     [3, `3. 電話番号: ${phoneDisplay}`],
     [4, `4. 人数: ${row.party_size}`],
-    [5, `5. カテゴリ: ${cat}`],
-    [6, `6. ステータス: ${STATUS_JA[status] ?? row.status}`],
-    [7, `7. 開始: ${formatDt(row.start_at)}`],
-    [8, `8. 終了: ${formatDt(row.end_at)}`],
-    [9, `9. テーブル: ${tableName}`],
-    [10, `10. 予約金額: ${amountDisplay}`],
-    [11, `11. 備考: ${notes}`],
-    [12, `12. スタッフ間メモ: ${internal}`],
+    [5, `5. 立食/着席: ${formatSeatingStyleJa(row.seating_style)}`],
+    [6, `6. カテゴリ: ${cat}`],
+    [7, `7. ステータス: ${STATUS_JA[status] ?? row.status}`],
+    [8, `8. 開始: ${formatDt(row.start_at)}`],
+    [9, `9. 終了: ${formatDt(row.end_at)}`],
+    [10, `10. テーブル: ${tableName}`],
+    [11, `11. 予約金額: ${amountDisplay}`],
+    [12, `12. 備考: ${notes}`],
+    [13, `13. スタッフ間メモ: ${internal}`],
   ];
 
   return raw.map(([num, text]) => {
