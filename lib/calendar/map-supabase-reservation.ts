@@ -14,6 +14,7 @@ export function mapReservationWithTableToCalendar(
     id: r.id,
     customerName: r.customer_name,
     partySize: r.party_size,
+    seatingStyle: r.seating_style,
     categoryId: cat.id,
     categoryIds: reservationCategoryIds(r),
     paletteKey: parsePaletteKey(cat.palette_key),

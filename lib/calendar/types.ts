@@ -1,3 +1,5 @@
+import type { ReservationSeatingStyle } from "@/types";
+
 /** DB の palette_key と一致（設定画面の選択肢の値＝この色ラベル） */
 export const RESERVATION_PALETTE_KEYS = [
   "青",
@@ -14,6 +16,7 @@ export type Reservation = {
   id: string;
   customerName: string;
   partySize: number;
+  seatingStyle: ReservationSeatingStyle;
   /** 代表カテゴリ（色表示用） */
   categoryId: string;
   /** 割り当て済みカテゴリ（フィルタ用） */

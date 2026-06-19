@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ReservationMonthTooltip } from "@/components/calendar/ReservationMonthTooltip";
 import { CalendarMobileMenu } from "@/components/calendar/CalendarMobileMenu";
 import { ClosedDayMobileBadge } from "@/components/calendar/ClosedDayMobileBadge";
 import { MonthYearPickerPopover } from "@/components/calendar/MonthYearPickerPopover";
@@ -321,17 +322,18 @@ export function MonthCalendarView({
                     </div>
                     <div className="flex min-h-0 shrink-0 flex-col gap-1 pt-0.5">
                       {shown.map((r) => (
-                        <button
-                          key={r.id}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onReservationClick(r);
-                          }}
-                          className={`min-h-7 max-w-full shrink-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] px-1.5 py-1 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(r)}`}
-                        >
-                          {formatTimeHm(r.startAt)} {r.customerName}
-                        </button>
+                        <ReservationMonthTooltip key={r.id} reservation={r}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onReservationClick(r);
+                            }}
+                            className={`min-h-7 max-w-full shrink-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] px-1.5 py-1 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(r)}`}
+                          >
+                            {formatTimeHm(r.startAt)} {r.customerName}
+                          </button>
+                        </ReservationMonthTooltip>
                       ))}
                       {more > 0 ? (
                         <button
@@ -368,25 +370,29 @@ export function MonthCalendarView({
                           ? "rounded-l-none rounded-r-[3px]"
                           : "rounded-none";
                   return (
-                    <button
+                    <ReservationMonthTooltip
                       key={`${seg.res.id}-${wi}-${seg.startCol}`}
-                      type="button"
-                      style={{
-                        left: `${left}%`,
-                        width: `${width}%`,
-                        top,
-                        height: MONTH_LANE_H,
-                      }}
-                      className={`pointer-events-auto absolute box-border overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(seg.res)} ${rounded}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onReservationClick(seg.res);
-                      }}
+                      reservation={seg.res}
                     >
-                      {seg.showLabel
-                        ? `${formatTimeHm(seg.res.startAt)} ${seg.res.customerName}`
-                        : ""}
-                    </button>
+                      <button
+                        type="button"
+                        style={{
+                          left: `${left}%`,
+                          width: `${width}%`,
+                          top,
+                          height: MONTH_LANE_H,
+                        }}
+                        className={`pointer-events-auto absolute box-border overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(seg.res)} ${rounded}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onReservationClick(seg.res);
+                        }}
+                      >
+                        {seg.showLabel
+                          ? `${formatTimeHm(seg.res.startAt)} ${seg.res.customerName}`
+                          : ""}
+                      </button>
+                    </ReservationMonthTooltip>
                   );
                 })}
               </div>
