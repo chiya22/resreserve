@@ -3,6 +3,7 @@
 import {
   cloneElement,
   useCallback,
+  useEffect,
   useId,
   useState,
   type ReactElement,
@@ -11,6 +12,23 @@ import { createPortal } from "react-dom";
 
 import { getMonthReservationTooltipLines } from "@/lib/calendar/format-month-reservation-tooltip";
 import type { Reservation } from "@/lib/calendar/types";
+
+/** マウスホバーでツールチップを出せる環境か（スマホ・タッチ主体端末は false） */
+const HOVER_TOOLTIP_MEDIA = "(hover: hover) and (pointer: fine)";
+
+function useCanHoverTooltip(): boolean {
+  const [canHover, setCanHover] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(HOVER_TOOLTIP_MEDIA);
+    const update = () => setCanHover(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return canHover;
+}
 
 type ReservationMonthTooltipProps = {
   reservation: Reservation;
@@ -27,21 +45,30 @@ export function ReservationMonthTooltip({
   reservation,
   children,
 }: ReservationMonthTooltipProps) {
+  const canHover = useCanHoverTooltip();
   const tooltipId = useId();
   const [visible, setVisible] = useState(false);
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const lines = getMonthReservationTooltipLines(reservation);
 
-  const showAt = useCallback((target: HTMLElement) => {
-    const rect = target.getBoundingClientRect();
-    setCoords({
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-    });
-    setVisible(true);
-  }, []);
+  const showAt = useCallback(
+    (target: HTMLElement) => {
+      if (!canHover) return;
+      const rect = target.getBoundingClientRect();
+      setCoords({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setVisible(true);
+    },
+    [canHover],
+  );
 
   const hide = useCallback(() => setVisible(false), []);
+
+  if (!canHover) {
+    return children;
+  }
 
   const child = cloneElement(children, {
     onMouseEnter: (event) => {
