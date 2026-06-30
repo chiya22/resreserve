@@ -14,6 +14,22 @@ import { createClient } from '@/lib/supabase/server'
 import { err, ok, type Result } from '@/types/result'
 import type { Staff } from '@/types'
 
+function roleReceivesNotifications(
+  role: string,
+): role is 'owner' | 'manager' {
+  return role === 'owner' || role === 'manager'
+}
+
+function validateNotificationEmail(
+  email: string,
+): Result<string, string> {
+  const trimmed = email.trim()
+  if (!z.string().email().safeParse(trimmed).success) {
+    return err('通知メールの形式が不正です')
+  }
+  return ok(trimmed)
+}
+
 const loginIdSchema = z
   .string()
   .trim()
@@ -35,17 +51,26 @@ const createSchema = z
     notification_email: z.string().trim().max(320).optional(),
   })
   .superRefine((d, ctx) => {
-    if (d.role !== 'owner') return
     const e = d.notification_email?.trim()
-    if (!e) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'オーナーには通知メールアドレスが必須です',
-        path: ['notification_email'],
-      })
+    if (d.role === 'owner') {
+      if (!e) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'オーナーには通知メールアドレスが必須です',
+          path: ['notification_email'],
+        })
+        return
+      }
+      if (!z.string().email().safeParse(e).success) {
+        ctx.addIssue({
+          code: 'custom',
+          message: '通知メールの形式が不正です',
+          path: ['notification_email'],
+        })
+      }
       return
     }
-    if (!z.string().email().safeParse(e).success) {
+    if (d.role === 'manager' && e && !z.string().email().safeParse(e).success) {
       ctx.addIssue({
         code: 'custom',
         message: '通知メールの形式が不正です',
@@ -123,8 +148,11 @@ export async function createStaffAccount(
       login_id,
       name,
       role,
-      notification_email:
-        role === 'owner' ? notification_email!.trim() : null,
+      notification_email: !roleReceivesNotifications(role)
+        ? null
+        : role === 'owner'
+          ? notification_email!.trim()
+          : notification_email?.trim() || null,
     })
     .select('id, login_id')
     .single()
@@ -202,16 +230,28 @@ export async function updateStaffAccount(
 
   let resolvedNotificationEmail: string | null
   if (nextRole === 'owner') {
-    if (nextNotificationRaw !== undefined) {
-      resolvedNotificationEmail = nextNotificationRaw.trim()
-    } else {
-      resolvedNotificationEmail = (target.notification_email ?? '').trim() || null
-    }
-    if (!resolvedNotificationEmail) {
+    const raw =
+      nextNotificationRaw !== undefined
+        ? nextNotificationRaw.trim()
+        : (target.notification_email ?? '').trim()
+    if (!raw) {
       return err('オーナーには通知メールアドレスが必須です')
     }
-    if (!z.string().email().safeParse(resolvedNotificationEmail).success) {
-      return err('通知メールの形式が不正です')
+    const validated = validateNotificationEmail(raw)
+    if (!validated.success) return validated
+    resolvedNotificationEmail = validated.data
+  } else if (nextRole === 'manager') {
+    if (nextNotificationRaw !== undefined) {
+      const raw = nextNotificationRaw.trim()
+      if (!raw) {
+        resolvedNotificationEmail = null
+      } else {
+        const validated = validateNotificationEmail(raw)
+        if (!validated.success) return validated
+        resolvedNotificationEmail = validated.data
+      }
+    } else {
+      resolvedNotificationEmail = (target.notification_email ?? '').trim() || null
     }
   } else {
     resolvedNotificationEmail = null
@@ -263,13 +303,14 @@ export async function updateStaffAccount(
   if (role !== undefined) patch.role = role
 
   const notificationNeedsRowUpdate =
-    nextRole === 'owner' ||
-    target.notification_email !== null ||
-    role !== undefined
+    nextNotificationRaw !== undefined ||
+    role !== undefined ||
+    target.notification_email !== null
 
   if (notificationNeedsRowUpdate) {
-    patch.notification_email =
-      nextRole === 'owner' ? resolvedNotificationEmail : null
+    patch.notification_email = roleReceivesNotifications(nextRole)
+      ? resolvedNotificationEmail
+      : null
   }
 
   if (Object.keys(patch).length > 0) {

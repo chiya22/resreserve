@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { ClosedDayMobileBadge } from "@/components/calendar/ClosedDayMobileBadge";
 import { MonthYearPickerPopover } from "@/components/calendar/MonthYearPickerPopover";
+import { AvailabilityBookingRequestModal } from "@/components/public/AvailabilityBookingRequestModal";
 import {
   calPageShell,
   calScrollX,
@@ -25,6 +26,9 @@ import {
   localDateKey,
   ymdToStartOfDay,
 } from "@/lib/calendar/week";
+
+const bookableCellInteractiveClass =
+  "cursor-pointer transition-colors duration-[120ms] hover:bg-reservation-normal-bg focus-visible:bg-reservation-normal-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent active:bg-[#BFDBFE]";
 
 const WEEK_HEADER = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
@@ -69,6 +73,16 @@ function markDisplayClass(mark: PublicAvailabilityMark): string {
   return `inline-flex items-center justify-center font-medium leading-none ${markSizeClass(mark)} ${markToneClass(mark)}`;
 }
 
+function isBookingRequestMark(
+  mark: PublicAvailabilityMark | undefined,
+): mark is "○" | "△" {
+  return mark === "○" || mark === "△";
+}
+
+type BookingRequestSelection = {
+  dateYmd: string;
+};
+
 export function PublicAvailabilityMonthView({
   monthAnchor,
   availability,
@@ -76,6 +90,8 @@ export function PublicAvailabilityMonthView({
 }: PublicAvailabilityMonthViewProps) {
   const router = useRouter();
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [bookingRequest, setBookingRequest] =
+    useState<BookingRequestSelection | null>(null);
   const weeks = useMemo(() => buildMonthWeeks(monthAnchor), [monthAnchor]);
   const closedSet = useMemo(
     () => new Set(availability.closedDays),
@@ -191,12 +207,13 @@ export function PublicAvailabilityMonthView({
                 const { year, month } = calendarYearMonth(date);
                 const dayNum = calendarDayOfMonth(date);
                 const mark = inMonth ? availability.days[dayKey] : undefined;
+                const isClickable =
+                  inMonth && !isClosedDay && isBookingRequestMark(mark);
 
-                return (
-                  <div
-                    key={date.toISOString()}
-                    className={`relative box-border flex min-h-[88px] flex-col items-center px-1 pb-2 pt-[5px] md:min-h-[96px] ${cellBg} border-b-[0.5px] border-r-[0.5px] border-border`}
-                  >
+                const cellClassName = `relative box-border flex min-h-[88px] w-full flex-col items-center px-1 pb-2 pt-[5px] md:min-h-[96px] ${cellBg} border-b-[0.5px] border-r-[0.5px] border-border`;
+
+                const cellContent = (
+                  <>
                     <span className="flex shrink-0 items-center gap-1 self-start">
                       <span className="relative inline-flex items-center justify-center">
                         <span
@@ -227,13 +244,38 @@ export function PublicAvailabilityMonthView({
                         ) : mark ? (
                           <span
                             className={`min-h-8 ${markDisplayClass(mark)}`}
-                            aria-label={`${year}年${month}月${dayNum}日: ${publicAvailabilityMarkLabel(mark)}`}
+                            aria-hidden={isClickable}
+                            {...(!isClickable
+                              ? {
+                                  "aria-label": `${year}年${month}月${dayNum}日: ${publicAvailabilityMarkLabel(mark)}`,
+                                }
+                              : {})}
                           >
                             {mark}
                           </span>
                         ) : null}
                       </div>
                     ) : null}
+                  </>
+                );
+
+                if (isClickable) {
+                  return (
+                    <button
+                      key={date.toISOString()}
+                      type="button"
+                      onClick={() => setBookingRequest({ dateYmd: dayKey })}
+                      className={`${cellClassName} ${bookableCellInteractiveClass}`}
+                      aria-label={`${year}年${month}月${dayNum}日: ${publicAvailabilityMarkLabel(mark)} — 予約入力`}
+                    >
+                      {cellContent}
+                    </button>
+                  );
+                }
+
+                return (
+                  <div key={date.toISOString()} className={cellClassName}>
+                    {cellContent}
                   </div>
                 );
               })}
@@ -241,6 +283,13 @@ export function PublicAvailabilityMonthView({
           ))}
         </div>
       </div>
+
+      {bookingRequest ? (
+        <AvailabilityBookingRequestModal
+          reservationDate={bookingRequest.dateYmd}
+          onClose={() => setBookingRequest(null)}
+        />
+      ) : null}
     </div>
   );
 }

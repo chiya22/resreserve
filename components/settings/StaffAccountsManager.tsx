@@ -21,6 +21,10 @@ const ROLES: { value: StaffRole; label: string }[] = [
   { value: 'staff', label: 'スタッフ' },
 ]
 
+function roleShowsNotificationEmail(role: StaffRole): boolean {
+  return role === 'owner' || role === 'manager'
+}
+
 export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsManagerProps) {
   const router = useRouter()
   const [createError, setCreateError] = useState<string | null>(null)
@@ -41,8 +45,9 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
       password: cPass,
       name: cName,
       role: cRole,
-      notification_email:
-        cRole === 'owner' ? cNotifyEmail.trim() : undefined,
+      notification_email: roleShowsNotificationEmail(cRole)
+        ? cNotifyEmail.trim()
+        : undefined,
     })
     setPendingId(null)
     if (!r.success) {
@@ -75,7 +80,7 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
       <section className="rounded-xl border border-border bg-bg-primary p-6 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
         <h2 className="text-sm font-medium text-text-primary">アカウントを作成</h2>
         <p className="mt-1 text-xs text-text-secondary">
-          パスワードは作成時に設定し、利用者に伝えてください。オーナーには予約の追加・変更・キャンセル時の通知メール先を必ず登録します（複数オーナーがいれば全員に送信されます）。
+          パスワードは作成時に設定し、利用者に伝えてください。オーナーには予約の追加・変更・キャンセル時の通知メール先を必ず登録します（複数オーナーがいれば全員に送信されます）。マネージャーは任意で通知メールを登録でき、公開予約依頼の通知先として利用できます。
         </p>
 
         <form onSubmit={handleCreate} className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -124,10 +129,12 @@ export function StaffAccountsManager({ staff, currentUserId }: StaffAccountsMana
               ))}
             </select>
           </label>
-          {cRole === 'owner' ? (
+          {roleShowsNotificationEmail(cRole) ? (
             <label className="block sm:col-span-2">
               <span className="mb-1 block text-xs text-text-tertiary">
-                オーナー向け通知メール（必須）
+                {cRole === 'owner'
+                  ? '通知メール（必須）'
+                  : '通知メール（任意・公開予約依頼）'}
               </span>
               <input
                 type="email"
@@ -229,8 +236,9 @@ function StaffRowEditor({
       login_id: loginId !== row.login_id ? loginId : undefined,
       name: name !== row.name ? name : undefined,
       role: role !== row.role ? role : undefined,
-      notification_email:
-        role === 'owner' ? notificationEmail.trim() : undefined,
+      notification_email: roleShowsNotificationEmail(role)
+        ? notificationEmail.trim()
+        : undefined,
       newPassword: newPassword.trim() ? newPassword : undefined,
     })
     setPendingId(null)
@@ -252,13 +260,15 @@ function StaffRowEditor({
           {ROLES.find((r) => r.value === row.role)?.label ?? row.role}
         </td>
         <td className="max-w-[200px] truncate px-3 py-2 text-text-secondary">
-          {row.role === 'owner' ? (
+          {roleShowsNotificationEmail(row.role) ? (
             row.notification_email?.trim() ? (
               <span title={row.notification_email}>{row.notification_email}</span>
-            ) : (
+            ) : row.role === 'owner' ? (
               <span className="text-reservation-waitlist-text">
                 未設定（編集してください）
               </span>
+            ) : (
+              '—'
             )
           ) : (
             '—'
@@ -337,10 +347,12 @@ function StaffRowEditor({
               ) : null}
             </label>
           </div>
-          {role === 'owner' ? (
+          {roleShowsNotificationEmail(role) ? (
             <label className="block max-w-lg">
               <span className="mb-1 block text-[11px] text-text-tertiary">
-                オーナー向け通知メール（必須・予約の追加・変更・キャンセル通知）
+                {role === 'owner'
+                  ? '通知メール（必須・予約の追加・変更・キャンセル通知）'
+                  : '通知メール（任意・公開予約依頼の通知）'}
               </span>
               <input
                 type="email"
