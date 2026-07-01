@@ -107,6 +107,10 @@ export function MonthCalendarView({
 }: MonthCalendarViewProps) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const weeks = useMemo(() => buildMonthWeeks(monthAnchor), [monthAnchor]);
+  const availabilityUrl = useMemo(() => {
+    const { year, month } = calendarYearMonth(monthAnchor);
+    return `/availability?year=${year}&month=${month}`;
+  }, [monthAnchor]);
 
   const weekLayouts = useMemo(
     () =>
@@ -171,6 +175,15 @@ export function MonthCalendarView({
               <span className="sm:hidden">＋ 新規</span>
               <span className="hidden sm:inline">＋ 新規予約</span>
             </button>
+            <a
+              href={availabilityUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={calTouchOutlineSm}
+              aria-label="予約状況を新しいウィンドウで開く"
+            >
+              予約状況
+            </a>
             <nav
               className="flex items-center gap-1"
               aria-label="カレンダー表示切り替え"
