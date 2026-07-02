@@ -1,6 +1,6 @@
 import {
-  formatBookingRequestCourseSummary,
   formatBookingRequestSeatingStyleLabel,
+  getBookingRequestPlanOptions,
   type BookingRequestInput,
 } from "@/lib/data/booking-request-shared";
 
@@ -15,6 +15,9 @@ export function formatBookingRequestEmailText(
 ): string {
   const company = input.company_name?.trim() || "—";
   const notes = input.notes?.trim() || "—";
+  const plan = getBookingRequestPlanOptions(input.seating_style).find(
+    (o) => o.value === input.course,
+  );
 
   return [
     "公開予約状況ページより予約依頼が届きました。",
@@ -22,7 +25,8 @@ export function formatBookingRequestEmailText(
     `予約年月日：${formatReservationDateJa(input.reservation_date)}`,
     `希望開始時間：${input.start_time}`,
     `提供形態：${formatBookingRequestSeatingStyleLabel(input.seating_style)}`,
-    `コース：${formatBookingRequestCourseSummary(input.seating_style, input.course)}`,
+    plan ? `プラン：${plan.titleLine}` : `プラン：${input.course}`,
+    plan ? `　${plan.drinkNote}` : "",
     `希望人数：${input.party_size}名`,
     `氏名：${input.customer_name}`,
     `氏名（ふりがな）：${input.customer_name_furigana}`,

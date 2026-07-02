@@ -7,8 +7,9 @@ import {
   BOOKING_REQUEST_SEATING_OPTIONS,
   bookingRequestEmailsMismatch,
   bookingRequestTimeOptions,
-  getBookingRequestCourseOptions,
-  type BookingRequestCourseKind,
+  getBookingRequestPlanOptions,
+  isBookingRequestPlanAvailable,
+  type BookingRequestPlanKind,
   type BookingRequestSeatingStyle,
 } from "@/lib/data/booking-request-shared";
 import { submitBookingRequest } from "@/lib/data/booking-request-actions";
@@ -63,11 +64,18 @@ export function AvailabilityBookingRequestModal({
   const [startTime, setStartTime] = useState(defaultStartTime);
   const [seatingStyle, setSeatingStyle] =
     useState<BookingRequestSeatingStyle>("standing");
-  const [course, setCourse] = useState<BookingRequestCourseKind>("standard");
-  const courseOptions = useMemo(
-    () => getBookingRequestCourseOptions(seatingStyle),
+  const [course, setCourse] = useState<BookingRequestPlanKind>("standard");
+  const planOptions = useMemo(
+    () => getBookingRequestPlanOptions(seatingStyle),
     [seatingStyle],
   );
+
+  function handleSeatingStyleChange(next: BookingRequestSeatingStyle) {
+    setSeatingStyle(next);
+    if (!isBookingRequestPlanAvailable(next, course)) {
+      setCourse(getBookingRequestPlanOptions(next)[0]?.value ?? "standard");
+    }
+  }
   const [partySizeInput, setPartySizeInput] = useState("10");
   const [customerName, setCustomerName] = useState("");
   const [customerNameFurigana, setCustomerNameFurigana] = useState("");
@@ -235,7 +243,7 @@ export function AvailabilityBookingRequestModal({
                         name="seating_style"
                         value={option.value}
                         checked={seatingStyle === option.value}
-                        onChange={() => setSeatingStyle(option.value)}
+                        onChange={() => handleSeatingStyleChange(option.value)}
                         className="sr-only"
                       />
                       {option.label}
@@ -245,11 +253,11 @@ export function AvailabilityBookingRequestModal({
               </fieldset>
 
               <fieldset>
-                <legend className="mb-1 text-xs text-text-tertiary">コース</legend>
-                <div className="space-y-2" role="radiogroup" aria-label="コース">
-                  {courseOptions.map((option) => (
+                <legend className="mb-1 text-xs text-text-tertiary">プラン</legend>
+                <div className="space-y-2" role="radiogroup" aria-label="プラン">
+                  {planOptions.map((option) => (
                     <label key={option.value} className={radioCourseCardClassName}>
-                      <span className="flex items-center gap-2 font-medium text-text-primary">
+                      <span className="flex items-center gap-2 font-medium leading-relaxed text-text-primary">
                         <input
                           type="radio"
                           name="course"
@@ -258,10 +266,10 @@ export function AvailabilityBookingRequestModal({
                           onChange={() => setCourse(option.value)}
                           className="sr-only"
                         />
-                        {option.labelWithPrice}
+                        {option.titleLine}
                       </span>
-                      <span className="pl-0 text-[11px] leading-relaxed text-reservation-waitlist-text">
-                        {option.description}
+                      <span className="text-[11px] leading-relaxed text-reservation-waitlist-text">
+                        {option.drinkNote}
                       </span>
                     </label>
                   ))}

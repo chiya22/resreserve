@@ -31,56 +31,84 @@ export const BOOKING_REQUEST_SEATING_OPTIONS = [
 export type BookingRequestSeatingStyle =
   (typeof BOOKING_REQUEST_SEATING_OPTIONS)[number]["value"];
 
-export const BOOKING_REQUEST_COURSE_KINDS = [
-  { value: "standard", label: "スタンダードコース", priceYen: 5500 },
-  { value: "simple", label: "シンプルコース", priceYen: 5000 },
-] as const;
-
-export type BookingRequestCourseKind =
-  (typeof BOOKING_REQUEST_COURSE_KINDS)[number]["value"];
+export type BookingRequestPlanKind = "standard" | "simple";
 
 const SEATING_STYLE_VALUES = BOOKING_REQUEST_SEATING_OPTIONS.map((o) => o.value) as [
   BookingRequestSeatingStyle,
   ...BookingRequestSeatingStyle[],
 ];
 
-const COURSE_KIND_VALUES = BOOKING_REQUEST_COURSE_KINDS.map((o) => o.value) as [
-  BookingRequestCourseKind,
-  ...BookingRequestCourseKind[],
-];
+const PLAN_KIND_VALUES = ["standard", "simple"] as const satisfies readonly BookingRequestPlanKind[];
 
-const BOOKING_REQUEST_COURSE_DESCRIPTIONS: Record<
-  BookingRequestSeatingStyle,
-  Record<BookingRequestCourseKind, string>
-> = {
-  standing: {
-    standard: "2時間飲み放題付き（瓶ビールあり）",
-    simple: "2時間飲み放題付き（瓶ビールなし）",
-  },
-  seated: {
-    standard: "2時間飲み放題付き（生ビール、瓶ビールあり）",
-    simple: "2時間飲み放題付き（生ビール、瓶ビールなし）",
-  },
-};
-
-export type BookingRequestCourseOption = {
-  value: BookingRequestCourseKind;
+type BookingRequestPlanDefinition = {
+  value: BookingRequestPlanKind;
   label: string;
   priceYen: number;
-  labelWithPrice: string;
-  description: string;
+  foodYen: number;
+  drinkYen: number;
+  drinkNote: string;
 };
 
-export function getBookingRequestCourseOptions(
+const BOOKING_REQUEST_PLANS: Record<
+  BookingRequestSeatingStyle,
+  readonly BookingRequestPlanDefinition[]
+> = {
+  standing: [
+    {
+      value: "standard",
+      label: "スタンダードプラン",
+      priceYen: 5000,
+      foodYen: 3500,
+      drinkYen: 1500,
+      drinkNote: "生ビールなし、瓶ビールあり",
+    },
+  ],
+  seated: [
+    {
+      value: "standard",
+      label: "スタンダードプラン",
+      priceYen: 5500,
+      foodYen: 3500,
+      drinkYen: 2000,
+      drinkNote: "生ビールあり、瓶ビールあり",
+    },
+    {
+      value: "simple",
+      label: "シンプルプラン",
+      priceYen: 5000,
+      foodYen: 3500,
+      drinkYen: 1500,
+      drinkNote: "生ビールは最初の一杯のみ、瓶ビールなし",
+    },
+  ],
+};
+
+function formatYen(amount: number): string {
+  return `${amount.toLocaleString("ja-JP")}円`;
+}
+
+function buildPlanTitleLine(plan: BookingRequestPlanDefinition): string {
+  return `${plan.label}：${formatYen(plan.priceYen)}（お料理：${formatYen(plan.foodYen)} 飲み放題：${formatYen(plan.drinkYen)}）`;
+}
+
+export type BookingRequestPlanOption = BookingRequestPlanDefinition & {
+  titleLine: string;
+};
+
+export function getBookingRequestPlanOptions(
   seatingStyle: BookingRequestSeatingStyle,
-): BookingRequestCourseOption[] {
-  return BOOKING_REQUEST_COURSE_KINDS.map((kind) => ({
-    value: kind.value,
-    label: kind.label,
-    priceYen: kind.priceYen,
-    labelWithPrice: `${kind.label}（${kind.priceYen.toLocaleString("ja-JP")}円）`,
-    description: BOOKING_REQUEST_COURSE_DESCRIPTIONS[seatingStyle][kind.value],
+): BookingRequestPlanOption[] {
+  return BOOKING_REQUEST_PLANS[seatingStyle].map((plan) => ({
+    ...plan,
+    titleLine: buildPlanTitleLine(plan),
   }));
+}
+
+export function isBookingRequestPlanAvailable(
+  seatingStyle: BookingRequestSeatingStyle,
+  plan: BookingRequestPlanKind,
+): boolean {
+  return BOOKING_REQUEST_PLANS[seatingStyle].some((item) => item.value === plan);
 }
 
 export function formatBookingRequestSeatingStyleLabel(
@@ -92,16 +120,19 @@ export function formatBookingRequestSeatingStyleLabel(
   );
 }
 
-export function formatBookingRequestCourseSummary(
+export function formatBookingRequestPlanSummary(
   seatingStyle: BookingRequestSeatingStyle,
-  course: BookingRequestCourseKind,
+  plan: BookingRequestPlanKind,
 ): string {
-  const option = getBookingRequestCourseOptions(seatingStyle).find(
-    (o) => o.value === course,
+  const option = getBookingRequestPlanOptions(seatingStyle).find(
+    (o) => o.value === plan,
   );
-  if (!option) return course;
-  return `${option.labelWithPrice} — ${option.description}`;
+  if (!option) return plan;
+  return `${option.titleLine}\n　${option.drinkNote}`;
 }
+
+/** @deprecated 互換用。plan と同義 */
+export type BookingRequestCourseKind = BookingRequestPlanKind;
 
 export const BOOKING_REQUEST_EMAIL_MISMATCH_MESSAGE =
   "メールアドレスが一致しません";
@@ -124,8 +155,8 @@ export const bookingRequestInputSchema = z
     seating_style: z.enum(SEATING_STYLE_VALUES, {
       message: "提供形態を選択してください",
     }),
-    course: z.enum(COURSE_KIND_VALUES, {
-      message: "コースを選択してください",
+    course: z.enum(PLAN_KIND_VALUES, {
+      message: "プランを選択してください",
     }),
     party_size: z.coerce
       .number({ message: "希望人数を入力してください" })
@@ -174,6 +205,13 @@ export const bookingRequestInputSchema = z
     message: BOOKING_REQUEST_EMAIL_MISMATCH_MESSAGE,
     path: ["email_confirm"],
   })
+  .refine(
+    (data) => isBookingRequestPlanAvailable(data.seating_style, data.course),
+    {
+      message: "選択した提供形態では利用できないプランです",
+      path: ["course"],
+    },
+  )
   .refine(
     (data) => timeToMinutes(data.start_time) >= BOOKING_REQUEST_HOUR_START * 60,
     {
