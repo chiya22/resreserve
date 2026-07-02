@@ -1,5 +1,6 @@
 import {
-  bookingRequestCourseLabel,
+  formatBookingRequestCourseSummary,
+  formatBookingRequestSeatingStyleLabel,
   type BookingRequestInput,
 } from "@/lib/data/booking-request-shared";
 
@@ -20,7 +21,8 @@ export function formatBookingRequestEmailText(
     "",
     `予約年月日：${formatReservationDateJa(input.reservation_date)}`,
     `希望開始時間：${input.start_time}`,
-    `コース：${bookingRequestCourseLabel(input.course)}`,
+    `提供形態：${formatBookingRequestSeatingStyleLabel(input.seating_style)}`,
+    `コース：${formatBookingRequestCourseSummary(input.seating_style, input.course)}`,
     `希望人数：${input.party_size}名`,
     `氏名：${input.customer_name}`,
     `氏名（ふりがな）：${input.customer_name_furigana}`,

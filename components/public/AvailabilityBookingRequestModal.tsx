@@ -3,13 +3,21 @@
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 
 import {
-  BOOKING_REQUEST_COURSE_OPTIONS,
   BOOKING_REQUEST_EMAIL_MISMATCH_MESSAGE,
+  BOOKING_REQUEST_SEATING_OPTIONS,
   bookingRequestEmailsMismatch,
   bookingRequestTimeOptions,
-  type BookingRequestCourse,
+  getBookingRequestCourseOptions,
+  type BookingRequestCourseKind,
+  type BookingRequestSeatingStyle,
 } from "@/lib/data/booking-request-shared";
 import { submitBookingRequest } from "@/lib/data/booking-request-actions";
+
+const radioChipClassName =
+  "inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-bg-primary px-3 py-2 text-xs transition-colors has-[:checked]:border-accent has-[:checked]:bg-bg-hover has-[:focus-visible]:bg-bg-hover touch-manipulation active:scale-[0.97]";
+
+const radioCourseCardClassName =
+  "flex cursor-pointer flex-col gap-1 rounded-md border border-border bg-bg-primary px-3 py-2.5 text-xs transition-colors has-[:checked]:border-accent has-[:checked]:bg-bg-hover has-[:focus-visible]:bg-bg-hover touch-manipulation active:scale-[0.97]";
 
 const inputClassName =
   "w-full rounded-lg border border-border bg-bg-primary px-3 py-2 text-sm outline-none transition-colors focus:border-accent focus:bg-bg-hover";
@@ -53,7 +61,13 @@ export function AvailabilityBookingRequestModal({
   const [isPending, startTransition] = useTransition();
 
   const [startTime, setStartTime] = useState(defaultStartTime);
-  const [course, setCourse] = useState<BookingRequestCourse>("5000");
+  const [seatingStyle, setSeatingStyle] =
+    useState<BookingRequestSeatingStyle>("standing");
+  const [course, setCourse] = useState<BookingRequestCourseKind>("standard");
+  const courseOptions = useMemo(
+    () => getBookingRequestCourseOptions(seatingStyle),
+    [seatingStyle],
+  );
   const [partySizeInput, setPartySizeInput] = useState("10");
   const [customerName, setCustomerName] = useState("");
   const [customerNameFurigana, setCustomerNameFurigana] = useState("");
@@ -103,6 +117,7 @@ export function AvailabilityBookingRequestModal({
       const result = await submitBookingRequest({
         reservation_date: reservationDate,
         start_time: startTime,
+        seating_style: seatingStyle,
         course,
         party_size: partySize,
         customer_name: customerName,
@@ -207,28 +222,50 @@ export function AvailabilityBookingRequestModal({
               </div>
 
               <fieldset>
-                <legend className="mb-1 text-xs text-text-tertiary">コース</legend>
-                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="コース">
-                  {BOOKING_REQUEST_COURSE_OPTIONS.map((option) => (
-                    <label
-                      key={option.value}
-                      className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-border bg-bg-primary px-3 py-2 text-xs transition-colors has-[:checked]:border-accent has-[:checked]:bg-bg-hover has-[:focus-visible]:bg-bg-hover touch-manipulation active:scale-[0.97]"
-                    >
+                <legend className="mb-1 text-xs text-text-tertiary">提供形態</legend>
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="radiogroup"
+                  aria-label="提供形態"
+                >
+                  {BOOKING_REQUEST_SEATING_OPTIONS.map((option) => (
+                    <label key={option.value} className={radioChipClassName}>
                       <input
                         type="radio"
-                        name="course"
+                        name="seating_style"
                         value={option.value}
-                        checked={course === option.value}
-                        onChange={() => setCourse(option.value)}
+                        checked={seatingStyle === option.value}
+                        onChange={() => setSeatingStyle(option.value)}
                         className="sr-only"
                       />
                       {option.label}
                     </label>
                   ))}
                 </div>
-                <p className="mt-2 text-[11px] text-reservation-waitlist-text">
-                  いずれも2時間飲み放題つき
-                </p>
+              </fieldset>
+
+              <fieldset>
+                <legend className="mb-1 text-xs text-text-tertiary">コース</legend>
+                <div className="space-y-2" role="radiogroup" aria-label="コース">
+                  {courseOptions.map((option) => (
+                    <label key={option.value} className={radioCourseCardClassName}>
+                      <span className="flex items-center gap-2 font-medium text-text-primary">
+                        <input
+                          type="radio"
+                          name="course"
+                          value={option.value}
+                          checked={course === option.value}
+                          onChange={() => setCourse(option.value)}
+                          className="sr-only"
+                        />
+                        {option.labelWithPrice}
+                      </span>
+                      <span className="pl-0 text-[11px] leading-relaxed text-reservation-waitlist-text">
+                        {option.description}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </fieldset>
 
               <div>

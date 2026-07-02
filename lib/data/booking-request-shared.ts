@@ -23,26 +23,84 @@ function timeToMinutes(time: string): number {
 
 export const bookingRequestTimeOptions = TIME_OPTIONS;
 
-export const BOOKING_REQUEST_COURSE_OPTIONS = [
-  { value: "5000", label: "5,000円コース" },
-  { value: "4500", label: "4,500円コース" },
+export const BOOKING_REQUEST_SEATING_OPTIONS = [
+  { value: "standing", label: "立食" },
+  { value: "seated", label: "着席" },
 ] as const;
 
-export type BookingRequestCourse =
-  (typeof BOOKING_REQUEST_COURSE_OPTIONS)[number]["value"];
+export type BookingRequestSeatingStyle =
+  (typeof BOOKING_REQUEST_SEATING_OPTIONS)[number]["value"];
 
-const COURSE_VALUES = BOOKING_REQUEST_COURSE_OPTIONS.map((o) => o.value) as [
-  BookingRequestCourse,
-  ...BookingRequestCourse[],
+export const BOOKING_REQUEST_COURSE_KINDS = [
+  { value: "standard", label: "スタンダードコース", priceYen: 5500 },
+  { value: "simple", label: "シンプルコース", priceYen: 5000 },
+] as const;
+
+export type BookingRequestCourseKind =
+  (typeof BOOKING_REQUEST_COURSE_KINDS)[number]["value"];
+
+const SEATING_STYLE_VALUES = BOOKING_REQUEST_SEATING_OPTIONS.map((o) => o.value) as [
+  BookingRequestSeatingStyle,
+  ...BookingRequestSeatingStyle[],
 ];
 
-export function bookingRequestCourseLabel(
-  course: BookingRequestCourse,
+const COURSE_KIND_VALUES = BOOKING_REQUEST_COURSE_KINDS.map((o) => o.value) as [
+  BookingRequestCourseKind,
+  ...BookingRequestCourseKind[],
+];
+
+const BOOKING_REQUEST_COURSE_DESCRIPTIONS: Record<
+  BookingRequestSeatingStyle,
+  Record<BookingRequestCourseKind, string>
+> = {
+  standing: {
+    standard: "2時間飲み放題付き（瓶ビールあり）",
+    simple: "2時間飲み放題付き（瓶ビールなし）",
+  },
+  seated: {
+    standard: "2時間飲み放題付き（生ビール、瓶ビールあり）",
+    simple: "2時間飲み放題付き（生ビール、瓶ビールなし）",
+  },
+};
+
+export type BookingRequestCourseOption = {
+  value: BookingRequestCourseKind;
+  label: string;
+  priceYen: number;
+  labelWithPrice: string;
+  description: string;
+};
+
+export function getBookingRequestCourseOptions(
+  seatingStyle: BookingRequestSeatingStyle,
+): BookingRequestCourseOption[] {
+  return BOOKING_REQUEST_COURSE_KINDS.map((kind) => ({
+    value: kind.value,
+    label: kind.label,
+    priceYen: kind.priceYen,
+    labelWithPrice: `${kind.label}（${kind.priceYen.toLocaleString("ja-JP")}円）`,
+    description: BOOKING_REQUEST_COURSE_DESCRIPTIONS[seatingStyle][kind.value],
+  }));
+}
+
+export function formatBookingRequestSeatingStyleLabel(
+  seatingStyle: BookingRequestSeatingStyle,
 ): string {
   return (
-    BOOKING_REQUEST_COURSE_OPTIONS.find((o) => o.value === course)?.label ??
-    course
+    BOOKING_REQUEST_SEATING_OPTIONS.find((o) => o.value === seatingStyle)?.label ??
+    seatingStyle
   );
+}
+
+export function formatBookingRequestCourseSummary(
+  seatingStyle: BookingRequestSeatingStyle,
+  course: BookingRequestCourseKind,
+): string {
+  const option = getBookingRequestCourseOptions(seatingStyle).find(
+    (o) => o.value === course,
+  );
+  if (!option) return course;
+  return `${option.labelWithPrice} — ${option.description}`;
 }
 
 export const BOOKING_REQUEST_EMAIL_MISMATCH_MESSAGE =
@@ -63,7 +121,10 @@ export const bookingRequestInputSchema = z
     start_time: z.enum(TIME_OPTIONS as [string, ...string[]], {
       message: "希望開始時間を選択してください",
     }),
-    course: z.enum(COURSE_VALUES, {
+    seating_style: z.enum(SEATING_STYLE_VALUES, {
+      message: "提供形態を選択してください",
+    }),
+    course: z.enum(COURSE_KIND_VALUES, {
       message: "コースを選択してください",
     }),
     party_size: z.coerce
