@@ -1,6 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 
 import { CALENDAR_DISPLAY_TIMEZONE } from "@/lib/calendar/calendar-constants";
+import { formatTimeHm } from "@/lib/calendar/datetime-ui";
 import { calendarYmd } from "@/lib/calendar/week";
 import type { Reservation } from "@/lib/calendar/types";
 import { formatSeatingStyleJa } from "@/lib/reservation/seating-style";
@@ -27,6 +28,14 @@ export function formatMonthReservationDatetime(
   const startText = formatInTimeZone(startAt, TZ, "yyyy年M月d日 HH:mm");
   const endText = formatInTimeZone(endAt, TZ, "yyyy年M月d日 HH:mm");
   return `${startText} 〜 ${endText}`;
+}
+
+/** 月カレンダー予約チップの1行表示（開始時間・立食/着席・人数・お客様名） */
+export function formatMonthReservationCellLabel(
+  reservation: Reservation,
+): string {
+  const seating = formatSeatingStyleJa(reservation.seatingStyle);
+  return `${formatTimeHm(reservation.startAt)} ${seating} ${reservation.partySize}名 ${reservation.customerName}`;
 }
 
 export function getMonthReservationTooltipLines(

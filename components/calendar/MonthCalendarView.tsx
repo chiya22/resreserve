@@ -21,7 +21,7 @@ import {
 import type { Reservation } from "@/lib/calendar/types";
 import { getReservationToneClass } from "@/lib/calendar/reservation-palette-classes";
 import { buildMonthWeeks, isInMonth } from "@/lib/calendar/month-grid";
-import { formatTimeHm } from "@/lib/calendar/datetime-ui";
+import { formatMonthReservationCellLabel } from "@/lib/calendar/format-month-reservation-tooltip";
 import {
   computeSpanSegmentsForWeek,
   isMultiDayReservation,
@@ -343,8 +343,9 @@ export function MonthCalendarView({
                               onReservationClick(r);
                             }}
                             className={`min-h-7 max-w-full shrink-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] px-1.5 py-1 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(r)}`}
+                            aria-label={formatMonthReservationCellLabel(r)}
                           >
-                            {formatTimeHm(r.startAt)} {r.customerName}
+                            {formatMonthReservationCellLabel(r)}
                           </button>
                         </ReservationMonthTooltip>
                       ))}
@@ -396,13 +397,14 @@ export function MonthCalendarView({
                           height: MONTH_LANE_H,
                         }}
                         className={`pointer-events-auto absolute box-border overflow-hidden text-ellipsis whitespace-nowrap px-1.5 py-0.5 text-left text-[11px] font-medium transition-opacity duration-[120ms] hover:opacity-[0.82] touch-manipulation ${getReservationToneClass(seg.res)} ${rounded}`}
+                        aria-label={formatMonthReservationCellLabel(seg.res)}
                         onClick={(e) => {
                           e.stopPropagation();
                           onReservationClick(seg.res);
                         }}
                       >
                         {seg.showLabel
-                          ? `${formatTimeHm(seg.res.startAt)} ${seg.res.customerName}`
+                          ? formatMonthReservationCellLabel(seg.res)
                           : ""}
                       </button>
                     </ReservationMonthTooltip>
