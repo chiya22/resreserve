@@ -11,8 +11,8 @@ import {
   type CalendarCategoryFilterOption,
 } from "@/components/calendar/CategoryFilterControl";
 import {
+  calMonthGrid,
   calPageShell,
-  calScrollX,
   calTouchAccentSm,
   calTouchNavArrow,
   calTouchOutlineSm,
@@ -238,7 +238,7 @@ export function MonthCalendarView({
         </div>
       </header>
 
-      <div className={calScrollX}>
+      <div className={calMonthGrid}>
         <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
           <div className="grid grid-cols-7 border-b-[0.5px] border-border">
             {WEEK_HEADER.map((label, i) => (

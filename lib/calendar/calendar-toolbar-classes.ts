@@ -1,10 +1,16 @@
 /**
  * カレンダーツールバー／横スクロールの共通クラス。
  * iOS のホームインジケータ・ノッチとの干渉を避けつつタップ領域を広げる。
+ *
+ * touch-action は pan-x のみにしない（縦のページスクロールが効かなくなるため）。
+ * 横オーバーフローがある週・日ビュー向け。月グリッドは calMonthGrid を使う。
  */
 
 export const calScrollX =
-  "min-w-0 w-full max-w-full flex-1 overflow-x-auto overscroll-x-contain touch-pan-x";
+  "min-w-0 w-full max-w-full flex-1 overflow-x-auto overscroll-x-contain touch-[pan-x_pan-y]";
+
+/** 月表示グリッド（横スクロール不要。touch-pan-x による縦スクロール阻害を避ける） */
+export const calMonthGrid = "min-w-0 w-full max-w-full flex-1";
 
 /** ページ縦コンテナ（横パディングはモバイル寄り。ノッチ等は dashboard layout の safe area と併用） */
 export const calPageShell =
