@@ -29,6 +29,7 @@ import {
 import type { CalendarViewMode } from "@/lib/calendar/view-mode";
 import {
   isSameLocalDay,
+  isSameCalendarMonth,
   localDateKey,
   calendarDayOfMonth,
   calendarYearMonth,
@@ -111,6 +112,16 @@ export function MonthCalendarView({
     const { year, month } = calendarYearMonth(monthAnchor);
     return `/availability?year=${year}&month=${month}`;
   }, [monthAnchor]);
+
+  const monthStats = useMemo(() => {
+    const list = reservations.filter((r) =>
+      isSameCalendarMonth(r.startAt, monthAnchor),
+    );
+    return {
+      count: list.length,
+      guests: list.reduce((sum, r) => sum + r.partySize, 0),
+    };
+  }, [reservations, monthAnchor]);
 
   const weekLayouts = useMemo(
     () =>
@@ -210,6 +221,12 @@ export function MonthCalendarView({
                 月
               </button>
             </nav>
+            <span
+              className="inline-flex min-h-9 items-center rounded-xl bg-bg-primary px-3 py-1.5 text-[11px] font-medium text-text-primary"
+              aria-label="月間サマリー"
+            >
+              {monthStats.count}件 / {monthStats.guests}名
+            </span>
           </div>
           <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
             <CalendarMobileMenu
