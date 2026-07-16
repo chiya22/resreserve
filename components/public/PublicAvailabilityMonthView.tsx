@@ -7,8 +7,8 @@ import { ClosedDayMobileBadge } from "@/components/calendar/ClosedDayMobileBadge
 import { MonthYearPickerPopover } from "@/components/calendar/MonthYearPickerPopover";
 import { AvailabilityBookingRequestModal } from "@/components/public/AvailabilityBookingRequestModal";
 import {
+  calMonthGrid,
   calPageShell,
-  calScrollX,
   calTouchNavArrow,
 } from "@/lib/calendar/calendar-toolbar-classes";
 import { buildMonthWeeks, isInMonth } from "@/lib/calendar/month-grid";
@@ -170,7 +170,7 @@ export function PublicAvailabilityMonthView({
         </ul>
       </header>
 
-      <div className={calScrollX}>
+      <div className={calMonthGrid}>
         <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
           <div className="grid grid-cols-7 border-b-[0.5px] border-border">
             {WEEK_HEADER.map((label, i) => (
