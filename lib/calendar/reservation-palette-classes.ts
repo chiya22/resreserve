@@ -9,6 +9,8 @@ export const RESERVATION_BLOCK_CLASS: Record<ReservationPaletteKey, string> =
       "bg-reservation-private-bg text-reservation-private-text border-l-reservation-private-border",
     赤: "bg-reservation-waitlist-bg text-reservation-waitlist-text border-l-reservation-waitlist-border",
     紫: "bg-reservation-vip-bg text-reservation-vip-text border-l-reservation-vip-border",
+    シアン:
+      "bg-reservation-bento-bg text-reservation-bento-text border-l-reservation-bento-border",
   };
 
 /** バッジ・月チップ・日サマリー用（左ボーダーなし） */
@@ -18,6 +20,7 @@ export const RESERVATION_TONE_CLASS: Record<ReservationPaletteKey, string> = {
   アンバー: "bg-reservation-private-bg text-reservation-private-text",
   赤: "bg-reservation-waitlist-bg text-reservation-waitlist-text",
   紫: "bg-reservation-vip-bg text-reservation-vip-text",
+  シアン: "bg-reservation-bento-bg text-reservation-bento-text",
 };
 
 /** 複数スペース選択時（カレンダーブロック） */

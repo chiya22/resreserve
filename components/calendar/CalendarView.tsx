@@ -121,6 +121,7 @@ export function CalendarView({
     () =>
       sortReservationCategories(categoryRows).map((r) => ({
         id: r.id,
+        code: r.code,
         label: r.label,
         palette_key: r.palette_key,
       })),

@@ -1,4 +1,4 @@
-import { parsePaletteKey } from "@/lib/calendar/palette-key";
+import { resolveCategoryPaletteKey } from "@/lib/calendar/palette-key";
 import {
   reservationCategoryIds,
   reservationCategoryLabelsText,
@@ -17,7 +17,7 @@ export function mapReservationWithTableToCalendar(
     seatingStyle: r.seating_style,
     categoryId: cat.id,
     categoryIds: reservationCategoryIds(r),
-    paletteKey: parsePaletteKey(cat.palette_key),
+    paletteKey: resolveCategoryPaletteKey(cat.code, cat.palette_key),
     categoryLabel: reservationCategoryLabelsText(r),
     startAt: new Date(r.start_at),
     endAt: new Date(r.end_at),

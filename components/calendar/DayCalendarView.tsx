@@ -25,7 +25,7 @@ import {
   DAY_PX_PER_HOUR,
   nowMarkerTopPx,
 } from "@/lib/calendar/day-layout";
-import { parsePaletteKey } from "@/lib/calendar/palette-key";
+import { resolveCategoryPaletteKey } from "@/lib/calendar/palette-key";
 import {
   getReservationBlockClass,
   RESERVATION_TONE_CLASS,
@@ -92,6 +92,7 @@ function DayReservationBlock({
 
 export type DaySummaryCategory = {
   id: string;
+  code: string;
   label: string;
   palette_key: string;
 };
@@ -335,7 +336,7 @@ export function DayCalendarView({
             {summaryCategories.map((cat) => {
               const n = stats.catCounts.get(cat.id) ?? 0;
               if (n <= 0) return null;
-              const pk = parsePaletteKey(cat.palette_key);
+              const pk = resolveCategoryPaletteKey(cat.code, cat.palette_key);
               return (
                 <span
                   key={cat.id}

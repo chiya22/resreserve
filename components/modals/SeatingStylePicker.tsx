@@ -13,7 +13,7 @@ export function SeatingStylePicker({
   name = "seating_style",
 }: SeatingStylePickerProps) {
   return (
-    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="立食/着席">
+    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="形式">
       {SEATING_STYLE_OPTIONS.map((option) => (
         <label
           key={option.value}

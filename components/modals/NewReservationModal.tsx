@@ -214,7 +214,7 @@ export function NewReservationModal({
             />
           </div>
           <fieldset>
-            <legend className="mb-1 text-xs text-text-tertiary">立食/着席</legend>
+            <legend className="mb-1 text-xs text-text-tertiary">形式</legend>
             <SeatingStylePicker
               value={seatingStyle}
               onChange={setSeatingStyle}

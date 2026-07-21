@@ -18,7 +18,7 @@ import {
   toDateInputValue,
   toTimeSelectValue,
 } from "@/lib/calendar/datetime-ui";
-import { parsePaletteKey } from "@/lib/calendar/palette-key";
+import { resolveCategoryPaletteKey } from "@/lib/calendar/palette-key";
 import { formatSeatingStyleJa } from "@/lib/reservation/seating-style";
 import { getReservationToneClass } from "@/lib/calendar/reservation-palette-classes";
 import {
@@ -182,7 +182,7 @@ export function ReservationDetailModal({
   const endD = new Date(reservation.end_at);
 
   const viewBadgeTone = getReservationToneClass({
-    paletteKey: parsePaletteKey(cat.palette_key),
+    paletteKey: resolveCategoryPaletteKey(cat.code, cat.palette_key),
     categoryIds: reservationCategoryIds(reservation),
   });
 
@@ -298,7 +298,7 @@ export function ReservationDetailModal({
               </div>
               <fieldset>
                 <legend className="mb-1 text-xs text-text-tertiary">
-                  立食/着席
+                  形式
                 </legend>
                 <SeatingStylePicker
                   value={seatingStyle}

@@ -7,6 +7,7 @@ export const RESERVATION_PALETTE_KEYS = [
   "アンバー",
   "赤",
   "紫",
+  "シアン",
 ] as const;
 
 export type ReservationPaletteKey =

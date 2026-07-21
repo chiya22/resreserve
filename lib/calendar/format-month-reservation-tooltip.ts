@@ -30,7 +30,7 @@ export function formatMonthReservationDatetime(
   return `${startText} 〜 ${endText}`;
 }
 
-/** 月カレンダー予約チップの1行表示（開始時間・立食/着席・人数・お客様名） */
+/** 月カレンダー予約チップの1行表示（開始時間・形式・人数・お客様名） */
 export function formatMonthReservationCellLabel(
   reservation: Reservation,
 ): string {
@@ -52,7 +52,7 @@ export function getMonthReservationTooltipLines(
     },
     { label: "人数", value: `${reservation.partySize}名` },
     {
-      label: "立食/着席",
+      label: "形式",
       value: formatSeatingStyleJa(reservation.seatingStyle),
     },
     { label: "カテゴリ", value: reservation.categoryLabel },

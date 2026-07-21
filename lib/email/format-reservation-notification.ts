@@ -123,7 +123,7 @@ function buildIndexedLines(
     [2, `2. 顧客名: ${row.customer_name}`],
     [3, `3. 電話番号: ${phoneDisplay}`],
     [4, `4. 人数: ${row.party_size}`],
-    [5, `5. 立食/着席: ${formatSeatingStyleJa(row.seating_style)}`],
+    [5, `5. 形式: ${formatSeatingStyleJa(row.seating_style)}`],
     [6, `6. カテゴリ: ${cat}`],
     [7, `7. ステータス: ${STATUS_JA[status] ?? row.status}`],
     [8, `8. 開始: ${formatDt(row.start_at)}`],
