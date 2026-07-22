@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import { RESERVATION_WITH_TABLE_EMBED } from "@/lib/data/reservation-select-snippet";
 import { reservationCategoryIds } from "@/lib/calendar/reservation-category-labels";
-import { RESERVATION_SEATING_STYLES } from "@/lib/reservation/seating-style";
+import {
+  RESERVATION_SEATING_STYLES,
+  seatingStyleAllowsZeroPartySize,
+} from "@/lib/reservation/seating-style";
 import { createClient } from "@/lib/supabase/server";
 import type { Result } from "@/types/result";
 import type { ReservationWithTable } from "@/types";
@@ -13,7 +16,8 @@ const reservationInputBaseSchema = z.object({
   table_id: z.string().uuid().nullable(),
   customer_name: z.string().min(1, "顧客名を入力してください").max(100),
   customer_phone: z.string().max(20).optional().nullable(),
-  party_size: z.number().int().min(1).max(200),
+  // 形式がイベントのときのみ 0 を許可（詳細は checkBusinessRules）
+  party_size: z.number().int().min(0).max(200),
   seating_style: z.enum(RESERVATION_SEATING_STYLES),
   category_ids: z
     .array(z.string().uuid())
@@ -88,6 +92,16 @@ export async function checkBusinessRules(
   if (catErr || !categoryRows || categoryRows.length !== categoryIds.length) {
     console.error("checkBusinessRules: invalid category:", catErr);
     return { success: false, error: "カテゴリが無効です" };
+  }
+
+  if (
+    input.party_size === 0 &&
+    !seatingStyleAllowsZeroPartySize(input.seating_style)
+  ) {
+    return {
+      success: false,
+      error: "人数0は形式がイベントの予約のみ設定できます",
+    };
   }
 
   const overlapBase = () =>

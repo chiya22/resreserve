@@ -14,6 +14,8 @@ import {
   toggleCategoryId,
 } from "@/components/modals/ReservationCategoryPicker";
 import { SeatingStylePicker } from "@/components/modals/SeatingStylePicker";
+import type { BookingCategoryOption } from "@/lib/calendar/category-display";
+import { seatingStyleAllowsZeroPartySize } from "@/lib/reservation/seating-style";
 import type { ReservationSeatingStyle } from "@/types";
 
 function buildInitialDatetime(defaultStartAt: string | undefined) {
@@ -39,7 +41,7 @@ function buildInitialDatetime(defaultStartAt: string | undefined) {
 }
 
 export type NewReservationModalProps = {
-  bookingCategoryOptions: { value: string; label: string }[];
+  bookingCategoryOptions: BookingCategoryOption[];
   /** コード `normal` のカテゴリ id（サーバー側で決定）。なければ先頭チップが既定 */
   defaultCategoryIdHint?: string;
   defaultStartAt?: string;
@@ -87,6 +89,12 @@ export function NewReservationModal({
     buildInitialDatetime(defaultStartAt),
   );
   const { startDate, startTime, endDate, endTime } = datetime;
+
+  const partySizeMin = seatingStyleAllowsZeroPartySize(seatingStyle) ? 0 : 1;
+
+  useEffect(() => {
+    if (partySize < partySizeMin) setPartySize(partySizeMin);
+  }, [partySize, partySizeMin]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -205,7 +213,7 @@ export function NewReservationModal({
               id="nr-party"
               name="party_size"
               type="number"
-              min={1}
+              min={partySizeMin}
               max={200}
               required
               value={partySize}

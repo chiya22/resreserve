@@ -292,7 +292,7 @@ export type Database = {
     Enums: {
       notification_channel: "email" | "sms" | "line"
       notification_type: "confirmation" | "reminder" | "cancellation"
-      reservation_seating_style: "standing" | "seated" | "bento"
+      reservation_seating_style: "standing" | "seated" | "bento" | "event"
       reservation_status:
         | "confirmed"
         | "pending"
@@ -429,7 +429,7 @@ export const Constants = {
     Enums: {
       notification_channel: ["email", "sms", "line"],
       notification_type: ["confirmation", "reminder", "cancellation"],
-      reservation_seating_style: ["standing", "seated", "bento"],
+      reservation_seating_style: ["standing", "seated", "bento", "event"],
       reservation_status: [
         "confirmed",
         "pending",

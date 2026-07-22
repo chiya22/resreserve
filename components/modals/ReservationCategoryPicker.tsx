@@ -1,5 +1,5 @@
 type ReservationCategoryPickerProps = {
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; code?: string }[];
   selectedIds: string[];
   onToggle: (categoryId: string) => void;
   emptyMessage?: string;

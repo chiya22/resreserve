@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { editModeCategoryChoicesForIds } from "@/lib/calendar/category-display";
+import type { BookingCategoryOption } from "@/lib/calendar/category-display";
 import {
   reservationCategoryIds,
   reservationCategoryLabelsText,
@@ -19,7 +20,10 @@ import {
   toTimeSelectValue,
 } from "@/lib/calendar/datetime-ui";
 import { resolveCategoryPaletteKey } from "@/lib/calendar/palette-key";
-import { formatSeatingStyleJa } from "@/lib/reservation/seating-style";
+import {
+  formatSeatingStyleJa,
+  seatingStyleAllowsZeroPartySize,
+} from "@/lib/reservation/seating-style";
 import { getReservationToneClass } from "@/lib/calendar/reservation-palette-classes";
 import {
   cancelReservation,
@@ -35,7 +39,7 @@ import type { ReservationSeatingStyle, ReservationWithTable } from "@/types";
 export type ReservationDetailModalProps = {
   reservation: ReservationWithTable;
   categoryLabelById: Map<string, string>;
-  bookingCategoryOptions: { value: string; label: string }[];
+  bookingCategoryOptions: BookingCategoryOption[];
   onClose: () => void;
   onUpdated?: () => void;
   onDeleted?: () => void;
@@ -127,6 +131,12 @@ export function ReservationDetailModal({
       categoryLabelById,
     );
   }, [reservation, bookingCategoryOptions, categoryLabelById]);
+
+  const partySizeMin = seatingStyleAllowsZeroPartySize(seatingStyle) ? 0 : 1;
+
+  useEffect(() => {
+    if (partySize < partySizeMin) setPartySize(partySizeMin);
+  }, [partySize, partySizeMin]);
 
   function handleCancelReservation() {
     setError(null);
@@ -288,7 +298,7 @@ export function ReservationDetailModal({
                 </label>
                 <input
                   type="number"
-                  min={1}
+                  min={partySizeMin}
                   max={200}
                   required
                   value={partySize}

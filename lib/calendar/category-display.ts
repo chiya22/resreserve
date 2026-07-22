@@ -22,15 +22,22 @@ export function bookingFormCategoriesFromRows(rows: ReservationCategoryRow[]) {
   ).map((r) => ({
     value: r.id as string,
     label: r.label,
+    code: r.code,
   }));
 }
+
+export type BookingCategoryOption = {
+  value: string;
+  label: string;
+  code?: string;
+};
 
 /** 詳細編集で、現在のカテゴリがフォーム対象外のときだけ末尾に足す */
 export function editModeCategoryChoicesForId(
   currentCategoryId: string,
-  bookingOptions: { value: string; label: string }[],
+  bookingOptions: BookingCategoryOption[],
   labelById: Map<string, string>,
-): { value: string; label: string }[] {
+): BookingCategoryOption[] {
   return editModeCategoryChoicesForIds(
     [currentCategoryId],
     bookingOptions,
@@ -40,9 +47,9 @@ export function editModeCategoryChoicesForId(
 
 export function editModeCategoryChoicesForIds(
   currentCategoryIds: string[],
-  bookingOptions: { value: string; label: string }[],
+  bookingOptions: BookingCategoryOption[],
   labelById: Map<string, string>,
-): { value: string; label: string }[] {
+): BookingCategoryOption[] {
   const seen = new Set(bookingOptions.map((o) => o.value));
   const out = [...bookingOptions];
   for (const categoryId of currentCategoryIds) {
