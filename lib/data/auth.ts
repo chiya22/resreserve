@@ -1,11 +1,15 @@
+import { cache } from 'react'
+
 import { createClient } from '@/lib/supabase/server'
 import type { Staff } from '@/types'
 
 /**
  * 現在のログインユーザーのスタッフ行を返す。
  * 未ログインまたは staff にいない場合は null。
+ *
+ * 同一リクエスト内で複数回呼ばれても Auth / DB への往復は 1 回で済むよう cache() で包む。
  */
-export async function getCurrentStaff(): Promise<Staff | null> {
+export const getCurrentStaff = cache(async (): Promise<Staff | null> => {
   const supabase = await createClient()
 
   const {
@@ -31,4 +35,4 @@ export async function getCurrentStaff(): Promise<Staff | null> {
   }
 
   return data
-}
+})

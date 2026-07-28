@@ -24,14 +24,18 @@ export async function middleware(request: NextRequest) {
     },
   )
 
+  // getSession() は Cookie から読むため Auth API への往復が発生せず（期限切れ時のみ
+  // リフレッシュ）、Cookie の更新も従来どおり行われる。
+  // ここは「セッションが無ければログインへ送る」だけの軽いゲートで、確定的な認可判定は
+  // 各ページ / Server Action の getCurrentStaff()（= getUser()）が担う。
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    data: { session },
+  } = await supabase.auth.getSession()
 
   const path = request.nextUrl.pathname
 
   if (path.startsWith('/calendar') || path.startsWith('/settings')) {
-    if (!user) {
+    if (!session) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('redirect', path)
@@ -40,15 +44,21 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  if (path === '/login' && user) {
-    const { data: staff } = await supabase
-      .from('staff')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
+  if (path === '/login' && session) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (staff) {
-      return NextResponse.redirect(new URL('/calendar', request.url))
+    if (user) {
+      const { data: staff } = await supabase
+        .from('staff')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (staff) {
+        return NextResponse.redirect(new URL('/calendar', request.url))
+      }
     }
   }
 

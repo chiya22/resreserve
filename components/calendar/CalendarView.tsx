@@ -53,12 +53,10 @@ import type {
   ClosedDay,
   ReservationCategoryRow,
   ReservationWithTable,
-  Table,
 } from "@/types";
 
 export type CalendarViewProps = {
   initialReservations: ReservationWithTable[];
-  tables: Table[];
   initialView: "week" | "day" | "month";
   initialDate: string;
   initialNow: string;
@@ -89,7 +87,6 @@ function useMinuteClock(initialNowIso: string): Date {
 
 export function CalendarView({
   initialReservations,
-  tables,
   initialView: view,
   initialDate,
   initialNow,
@@ -319,7 +316,6 @@ export function CalendarView({
 
   return (
     <>
-      <span hidden data-table-count={tables.length} />
       {view === "week" ? (
         <WeekCalendarPanel
           weekStartSunday={weekStartSunday}

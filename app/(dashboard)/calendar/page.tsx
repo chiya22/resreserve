@@ -6,7 +6,6 @@ import { getCurrentStaff } from "@/lib/data/auth";
 import { listClosedDaysAll } from "@/lib/data/closed-days";
 import { listReservationCategories } from "@/lib/data/reservation-categories";
 import { getReservationsByDateRange } from "@/lib/data/reservations";
-import { listTables } from "@/lib/data/tables";
 
 export const metadata: Metadata = {
   title: "予約カレンダー | 予約管理",
@@ -20,9 +19,6 @@ export default async function CalendarPage({
 }) {
   const sp = await searchParams;
 
-  const staff = await getCurrentStaff();
-  if (!staff) redirect("/login?message=staff_required");
-
   const rawView = sp.view;
   const view: "day" | "week" | "month" =
     rawView === "day" || rawView === "week" || rawView === "month"
@@ -34,12 +30,16 @@ export default async function CalendarPage({
 
   const { rangeStart, rangeEnd } = getReservationFetchRangeUtc(safeBase, view);
 
-  const [reservations, tables, categoryRows, closedDays] = await Promise.all([
+  // 認証待ちで表示データの取得が直列化しないよう同時に投げる。
+  // 未ログイン時も RLS により各クエリは空配列を返すだけで、下の redirect で描画されない。
+  const [staff, reservations, categoryRows, closedDays] = await Promise.all([
+    getCurrentStaff(),
     getReservationsByDateRange(rangeStart, rangeEnd),
-    listTables(),
     listReservationCategories(),
     listClosedDaysAll(),
   ]);
+
+  if (!staff) redirect("/login?message=staff_required");
 
   const dateKey = safeBase.toISOString();
   const serverNow = new Date().toISOString();
@@ -48,7 +48,6 @@ export default async function CalendarPage({
     <CalendarView
       key={`${view}-${dateKey}`}
       initialReservations={reservations}
-      tables={tables}
       initialView={view}
       initialDate={dateKey}
       initialNow={serverNow}
