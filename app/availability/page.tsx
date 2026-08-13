@@ -6,8 +6,8 @@ import {
   getPublicMonthlyAvailability,
   resolvePublicAvailabilityYearMonth,
 } from "@/lib/data/public-availability";
-import { isYearMonthQueryAbsent } from "@/lib/public/availability-status";
-import { ymdToStartOfDay } from "@/lib/calendar/week";
+import { isYearMonthQueryAbsent, isBeforeCurrentCalendarMonth } from "@/lib/public/availability-status";
+import { calendarYearMonth, ymdToStartOfDay } from "@/lib/calendar/week";
 
 export const metadata: Metadata = {
   title: "予約状況 | 空き状況",
@@ -20,9 +20,10 @@ export default async function PublicAvailabilityPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const sp = await searchParams;
+  const now = new Date();
 
   if (isYearMonthQueryAbsent(sp.year, sp.month)) {
-    const current = resolvePublicAvailabilityYearMonth(undefined, undefined);
+    const current = resolvePublicAvailabilityYearMonth(undefined, undefined, now);
     if (current) {
       redirect(
         `/availability?year=${current.year}&month=${current.month}`,
@@ -30,8 +31,7 @@ export default async function PublicAvailabilityPage({
     }
   }
 
-  const parsed = resolvePublicAvailabilityYearMonth(sp.year, sp.month);
-  const now = new Date();
+  const parsed = resolvePublicAvailabilityYearMonth(sp.year, sp.month, now);
 
   if (!parsed) {
     return (
@@ -41,6 +41,12 @@ export default async function PublicAvailabilityPage({
         </p>
       </main>
     );
+  }
+
+  // 公開画面は当月以降のみ。前月以前の URL は当月へ寄せる。
+  if (isBeforeCurrentCalendarMonth(parsed.year, parsed.month, now)) {
+    const current = calendarYearMonth(now);
+    redirect(`/availability?year=${current.year}&month=${current.month}`);
   }
 
   const availability = await getPublicMonthlyAvailability(

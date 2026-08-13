@@ -125,6 +125,7 @@ export async function getPublicMonthlyAvailability(
 export function resolvePublicAvailabilityYearMonth(
   yearRaw: string | null | undefined,
   monthRaw: string | null | undefined,
+  now = new Date(),
 ): { year: number; month: number } | null {
-  return parseYearMonthParams(yearRaw, monthRaw);
+  return parseYearMonthParams(yearRaw, monthRaw, now);
 }

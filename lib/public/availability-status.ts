@@ -1,7 +1,7 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 import { CALENDAR_DISPLAY_TIMEZONE } from "@/lib/calendar/calendar-constants";
-import { ymdToStartOfDay } from "@/lib/calendar/week";
+import { isYearMonthBefore, ymdToStartOfDay } from "@/lib/calendar/week";
 import { PUBLIC_AVAILABILITY_CATEGORY_LABELS } from "@/lib/public/availability-category-labels";
 
 const TZ = CALENDAR_DISPLAY_TIMEZONE;
@@ -167,6 +167,19 @@ export function parseYearMonthParams(
   }
 
   return { year, month };
+}
+
+/** Asia/Tokyo の「今月」より前なら true */
+export function isBeforeCurrentCalendarMonth(
+  year: number,
+  month: number,
+  now = new Date(),
+): boolean {
+  const current = {
+    year: Number(formatInTimeZone(now, TZ, "yyyy")),
+    month: Number(formatInTimeZone(now, TZ, "M")),
+  };
+  return isYearMonthBefore({ year, month }, current);
 }
 
 /** year / month のクエリが未指定か（空文字・空白のみも未指定扱い） */

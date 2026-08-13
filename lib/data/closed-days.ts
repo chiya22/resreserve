@@ -1,4 +1,4 @@
-import { calendarTodayYmd } from "@/lib/calendar/week";
+import { calendarYmd, calendarTodayYmd } from "@/lib/calendar/week";
 import { createClient } from "@/lib/supabase/server";
 import type { ClosedDay } from "@/types";
 
@@ -7,12 +7,14 @@ export async function listClosedDaysInRange(
   end: Date,
 ): Promise<ClosedDay[]> {
   const supabase = await createClient();
+  const startYmd = calendarYmd(start);
+  const endYmd = calendarYmd(end);
 
   const { data, error } = await supabase
     .from("closed_days")
     .select("*")
-    .gte("closed_on", start.toISOString().slice(0, 10))
-    .lte("closed_on", end.toISOString().slice(0, 10))
+    .gte("closed_on", startYmd)
+    .lte("closed_on", endYmd)
     .order("closed_on", { ascending: true });
 
   if (error) {
@@ -23,6 +25,7 @@ export async function listClosedDaysInRange(
   return (data ?? []) as ClosedDay[];
 }
 
+/** 設定画面用: 今日以降の休業日のみ（過去は管理対象外） */
 export async function listClosedDaysAll(): Promise<ClosedDay[]> {
   const supabase = await createClient();
   const today = calendarTodayYmd();

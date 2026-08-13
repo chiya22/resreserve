@@ -23,6 +23,7 @@ import {
   calendarDayOfMonth,
   calendarYearMonth,
   isSameLocalDay,
+  isYearMonthBefore,
   localDateKey,
   ymdToStartOfDay,
 } from "@/lib/calendar/week";
@@ -97,13 +98,20 @@ export function PublicAvailabilityMonthView({
     () => new Set(availability.closedDays),
     [availability.closedDays],
   );
+  const currentYearMonth = useMemo(() => calendarYearMonth(now), [now]);
+  const canGoPrevMonth = !isYearMonthBefore(
+    calendarYearMonth(addCalendarMonths(monthAnchor, -1)),
+    currentYearMonth,
+  );
 
   function navigateToMonth(anchor: Date) {
-    const { year, month } = calendarYearMonth(anchor);
-    router.push(`/availability?year=${year}&month=${month}`);
+    const next = calendarYearMonth(anchor);
+    if (isYearMonthBefore(next, currentYearMonth)) return;
+    router.push(`/availability?year=${next.year}&month=${next.month}`);
   }
 
   function handlePrevMonth() {
+    if (!canGoPrevMonth) return;
     navigateToMonth(addCalendarMonths(monthAnchor, -1));
   }
 
@@ -124,7 +132,8 @@ export function PublicAvailabilityMonthView({
             type="button"
             onClick={handlePrevMonth}
             aria-label="前の月"
-            className={calTouchNavArrow}
+            disabled={!canGoPrevMonth}
+            className={`${calTouchNavArrow} disabled:pointer-events-none disabled:opacity-40`}
           >
             ◀
           </button>
@@ -144,6 +153,7 @@ export function PublicAvailabilityMonthView({
               open={monthPickerOpen}
               onClose={() => setMonthPickerOpen(false)}
               onSelectMonth={handleJumpMonth}
+              minYearMonth={currentYearMonth}
             />
           </div>
           <button
@@ -207,8 +217,16 @@ export function PublicAvailabilityMonthView({
                 const { year, month } = calendarYearMonth(date);
                 const dayNum = calendarDayOfMonth(date);
                 const mark = inMonth ? availability.days[dayKey] : undefined;
+                // 今日以前は予約依頼不可（当日は可）。比較は Asia/Tokyo の暦日キー。
+                const isPastDay = dayKey < localDateKey(now);
+                const isOnOrBeforeToday = dayKey <= localDateKey(now);
                 const isClickable =
-                  inMonth && !isClosedDay && isBookingRequestMark(mark);
+                  inMonth &&
+                  !isClosedDay &&
+                  !isPastDay &&
+                  isBookingRequestMark(mark);
+                const mutedPastContent =
+                  inMonth && isOnOrBeforeToday ? "opacity-40" : "";
 
                 const cellClassName = `relative box-border flex min-h-[88px] w-full flex-col items-center px-1 pb-2 pt-[5px] md:min-h-[96px] ${cellBg} border-b-[0.5px] border-r-[0.5px] border-border`;
 
@@ -223,7 +241,7 @@ export function PublicAvailabilityMonthView({
                               : inMonth
                                 ? "font-medium text-text-primary"
                                 : "font-medium text-[#D1D5DB]"
-                          }`}
+                          } ${mutedPastContent}`}
                         >
                           {dayNum}
                         </span>
@@ -243,7 +261,7 @@ export function PublicAvailabilityMonthView({
                           <span className="text-[11px] text-text-tertiary">休</span>
                         ) : mark ? (
                           <span
-                            className={`min-h-8 ${markDisplayClass(mark)}`}
+                            className={`min-h-8 ${markDisplayClass(mark)} ${mutedPastContent}`}
                             aria-hidden={isClickable}
                             {...(!isClickable
                               ? {

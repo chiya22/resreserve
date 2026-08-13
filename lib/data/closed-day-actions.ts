@@ -31,6 +31,7 @@ async function requireClosedDayMaintainer(): Promise<Result<void, string>> {
 function revalidateClosedDaysUi(): void {
   revalidatePath("/calendar");
   revalidatePath("/settings/closed-days");
+  revalidatePath("/availability");
 }
 
 export async function createClosedDay(raw: unknown): Promise<Result<ClosedDay, string>> {

@@ -4,6 +4,7 @@ import {
   getPublicMonthlyAvailability,
   resolvePublicAvailabilityYearMonth,
 } from "@/lib/data/public-availability";
+import { isBeforeCurrentCalendarMonth } from "@/lib/public/availability-status";
 
 function corsHeaders(): HeadersInit {
   const origin = process.env.PUBLIC_AVAILABILITY_CORS_ORIGIN ?? "*";
@@ -28,6 +29,13 @@ export async function GET(request: Request) {
   if (!parsed) {
     return NextResponse.json(
       { error: "year または month の指定が不正です（month は 1〜12）" },
+      { status: 400, headers: corsHeaders() },
+    );
+  }
+
+  if (isBeforeCurrentCalendarMonth(parsed.year, parsed.month)) {
+    return NextResponse.json(
+      { error: "当月より前の空き状況は公開していません" },
       { status: 400, headers: corsHeaders() },
     );
   }

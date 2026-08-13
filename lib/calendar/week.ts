@@ -89,6 +89,21 @@ export function isSameCalendarMonth(a: Date, b: Date): boolean {
   return pa.year === pb.year && pa.month === pb.month;
 }
 
+/** 年月を比較用の整数に変換（month は 1〜12） */
+export function yearMonthOrdinal(year: number, month: number): number {
+  return year * 12 + month;
+}
+
+export function isYearMonthBefore(
+  target: { year: number; month: number },
+  baseline: { year: number; month: number },
+): boolean {
+  return (
+    yearMonthOrdinal(target.year, target.month) <
+    yearMonthOrdinal(baseline.year, baseline.month)
+  );
+}
+
 export function formatMonthRange(weekStartSunday: Date): string {
   const weekEndSat = endOfWeekSaturday(weekStartSunday);
   const y1 = calendarDateParts(weekStartSunday).year;

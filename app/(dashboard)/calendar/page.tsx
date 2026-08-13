@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { getReservationFetchRangeUtc } from "@/lib/calendar/reservation-fetch-range";
 import { getCurrentStaff } from "@/lib/data/auth";
-import { listClosedDaysAll } from "@/lib/data/closed-days";
+import { listClosedDaysInRange } from "@/lib/data/closed-days";
 import { listReservationCategories } from "@/lib/data/reservation-categories";
 import { getReservationsByDateRange } from "@/lib/data/reservations";
 
@@ -36,7 +36,7 @@ export default async function CalendarPage({
     getCurrentStaff(),
     getReservationsByDateRange(rangeStart, rangeEnd),
     listReservationCategories(),
-    listClosedDaysAll(),
+    listClosedDaysInRange(rangeStart, rangeEnd),
   ]);
 
   if (!staff) redirect("/login?message=staff_required");
