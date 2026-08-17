@@ -66,7 +66,7 @@ function overlapsCalendarDay(
   return startAt < dayEnd && endAt > dayStart;
 }
 
-/** 指定日に ○△× の判定対象となる予約か（メイン/ロビー/デッキ、または貸し切り） */
+/** 指定日に △ 判定対象となる予約か（メイン、または貸し切り） */
 function reservationAffectsDayMark(
   reservation: PublicReservationCategorySnapshot,
   dayYmd: string,
@@ -75,12 +75,7 @@ function reservationAffectsDayMark(
     return false;
   }
   if (reservation.blocksEntireCalendar) return true;
-  const labels = reservation.categoryLabels;
-  return (
-    labels.has(PUBLIC_AVAILABILITY_CATEGORY_LABELS.main) ||
-    labels.has(PUBLIC_AVAILABILITY_CATEGORY_LABELS.lobby) ||
-    labels.has(PUBLIC_AVAILABILITY_CATEGORY_LABELS.deck)
-  );
+  return reservation.categoryLabels.has(PUBLIC_AVAILABILITY_CATEGORY_LABELS.main);
 }
 
 export function computeDayAvailabilityMark(
@@ -248,19 +243,10 @@ export function toReservationCategorySnapshot(row: {
   };
 }
 
-/** 公開 API 用：メイン/ロビー/デッキカテゴリが1つも紐づいていない予約は ○ 判定に影響しない */
+/** 公開 API 用：メインまたは貸し切りが付いた予約のみ ○△× 判定に使う */
 export function reservationAffectsPublicAvailability(
   snapshot: PublicReservationCategorySnapshot,
 ): boolean {
   if (snapshot.blocksEntireCalendar) return true;
-  for (const label of snapshot.categoryLabels) {
-    if (
-      label === PUBLIC_AVAILABILITY_CATEGORY_LABELS.main ||
-      label === PUBLIC_AVAILABILITY_CATEGORY_LABELS.lobby ||
-      label === PUBLIC_AVAILABILITY_CATEGORY_LABELS.deck
-    ) {
-      return true;
-    }
-  }
-  return false;
+  return snapshot.categoryLabels.has(PUBLIC_AVAILABILITY_CATEGORY_LABELS.main);
 }
