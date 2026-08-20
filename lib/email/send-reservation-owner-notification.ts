@@ -27,7 +27,7 @@ async function sendToOwners(subject: string, text: string) {
   const recipients = await listOwnerNotificationEmails();
   if (recipients.length === 0) {
     console.warn(
-      "OWNER通知をスキップ: オーナーの通知メールアドレスが登録されていません",
+      "予約通知をスキップ: オーナー・マネージャーの通知メールアドレスが登録されていません",
     );
     return;
   }

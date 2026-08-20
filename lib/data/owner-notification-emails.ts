@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+/** 予約通知メールの送信対象ロール（notification_email が設定されている場合のみ送る） */
+const RESERVATION_NOTIFICATION_ROLES = ["owner", "manager"] as const;
+
 function collectNotificationEmails(
   rows: { notification_email: string | null }[] | null,
 ): string[] {
@@ -12,14 +15,14 @@ function collectNotificationEmails(
   return [...new Set(out)];
 }
 
-/** 予約の追加・変更・キャンセル通知を送るオーナーのメールアドレス（空白・未設定は除外） */
+/** 予約の追加・変更・キャンセル通知先（オーナー＋通知メール登録済みマネージャー） */
 export async function listOwnerNotificationEmails(): Promise<string[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("staff")
     .select("notification_email")
-    .eq("role", "owner");
+    .in("role", [...RESERVATION_NOTIFICATION_ROLES]);
 
   if (error) {
     console.error("listOwnerNotificationEmails failed:", error);
@@ -29,7 +32,7 @@ export async function listOwnerNotificationEmails(): Promise<string[]> {
   return collectNotificationEmails(data);
 }
 
-/** 公開予約依頼など・認証なしサーバー処理用（オーナー＋通知メール登録済みマネージャー） */
+/** 公開予約依頼など・認証なしサーバー処理用 */
 export async function listOwnerNotificationEmailsAdmin(): Promise<string[]> {
   let admin;
   try {
@@ -42,7 +45,7 @@ export async function listOwnerNotificationEmailsAdmin(): Promise<string[]> {
   const { data, error } = await admin
     .from("staff")
     .select("notification_email")
-    .in("role", ["owner", "manager"]);
+    .in("role", [...RESERVATION_NOTIFICATION_ROLES]);
 
   if (error) {
     console.error("listOwnerNotificationEmailsAdmin failed:", error);
