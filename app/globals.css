@@ -89,3 +89,109 @@ a,
     opacity: 0;
   }
 }
+
+/* 月別カレンダー印刷（A3 横） */
+@media print {
+  @page {
+    size: A3 landscape;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body > div {
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .month-print-root {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    padding: 0 !important;
+    gap: 0 !important;
+    max-width: none !important;
+  }
+
+  .month-print-header {
+    margin: 0 0 6mm;
+    text-align: center;
+  }
+
+  .month-print-title {
+    margin: 0;
+    font-size: 18pt;
+    font-weight: 500;
+    color: #1f2937;
+  }
+
+  .month-print-summary {
+    margin: 2mm 0 0;
+    font-size: 11pt;
+    font-weight: 400;
+    color: #1f2937;
+  }
+
+  .month-print-grid {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 曜日行・各週行を同じ 7 等分グリッドにし、内容の最小幅で列が広がらないようにする */
+  .month-print-weekdays,
+  .month-print-week-row {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    width: 100% !important;
+  }
+
+  .month-print-weeks {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .month-print-week-row {
+    flex: 1 1 0;
+    min-height: 28mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .month-print-weekdays > *,
+  .month-print-cell {
+    min-width: 0 !important;
+    max-width: 100%;
+    box-sizing: border-box !important;
+  }
+
+  /* 曜日ヘッダーにも右ボーダーを付け、セル列と罫線位置を揃える */
+  .month-print-weekdays > * {
+    border-right: 0.5px solid var(--color-border);
+  }
+
+  .month-print-cell {
+    min-height: 0 !important;
+    height: 100%;
+    overflow: hidden !important;
+  }
+}

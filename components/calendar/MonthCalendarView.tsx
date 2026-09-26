@@ -134,9 +134,20 @@ export function MonthCalendarView({
     [weeks, reservations],
   );
 
+  const handlePrint = () => {
+    const previousTitle = document.title;
+    document.title = monthTitle(monthAnchor);
+    const restoreTitle = () => {
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", restoreTitle);
+    };
+    window.addEventListener("afterprint", restoreTitle);
+    window.print();
+  };
+
   return (
-    <div className={calPageShell}>
-      <header className="flex flex-col gap-3">
+    <div className={`${calPageShell} month-print-root`}>
+      <header className="flex flex-col gap-3 print:hidden">
         <div className="flex min-w-0 items-center justify-center gap-2 sm:justify-start">
           <button
             type="button"
@@ -195,6 +206,16 @@ export function MonthCalendarView({
             >
               予約状況
             </a>
+            {staffIsOwner ? (
+              <button
+                type="button"
+                onClick={handlePrint}
+                className={calTouchOutlineSm}
+                aria-label="月別カレンダーを A3 横で印刷"
+              >
+                印刷
+              </button>
+            ) : null}
             <nav
               className="flex items-center gap-1"
               aria-label="カレンダー表示切り替え"
@@ -255,9 +276,16 @@ export function MonthCalendarView({
         </div>
       </header>
 
+      <div className="month-print-header hidden print:block">
+        <h1 className="month-print-title">{monthTitle(monthAnchor)}</h1>
+        <p className="month-print-summary">
+          総予約件数 {monthStats.count}件 / 総人数 {monthStats.guests}名
+        </p>
+      </div>
+
       <div className={calMonthGrid}>
-        <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
-          <div className="grid grid-cols-7 border-b-[0.5px] border-border">
+        <div className="month-print-grid w-full min-w-0 max-w-full overflow-hidden rounded-[10px] border-[0.5px] border-border bg-bg-primary">
+          <div className="month-print-weekdays grid grid-cols-7 border-b-[0.5px] border-border">
             {WEEK_HEADER.map((label, i) => (
               <div
                 key={i}
@@ -274,13 +302,14 @@ export function MonthCalendarView({
             ))}
           </div>
 
+          <div className="month-print-weeks">
           {weekLayouts.map(({ row, segments, laneBarsH }, wi) => {
             const spanOverlayH = Math.min(
               laneBarsH,
               MONTH_SPAN_OVERLAY_MAX_H,
             );
             return (
-            <div key={wi} className="relative grid grid-cols-7">
+            <div key={wi} className="month-print-week-row relative grid grid-cols-7">
               {row.map((date, colIdx) => {
                 const inMonth = isInMonth(date, monthAnchor);
                 const isToday = isSameLocalDay(date, now);
@@ -305,7 +334,7 @@ export function MonthCalendarView({
                 return (
                   <div
                     key={date.toISOString()}
-                    className={`relative box-border flex min-h-[124px] flex-col overflow-hidden border-b-[0.5px] border-r-[0.5px] border-border px-1 pb-1 pt-[5px] md:min-h-[136px] ${cellBg}${isClosedDay ? "" : " cursor-pointer"}`}
+                    className={`month-print-cell relative box-border flex min-h-[124px] flex-col overflow-hidden border-b-[0.5px] border-r-[0.5px] border-border px-1 pb-1 pt-[5px] md:min-h-[136px] ${cellBg}${isClosedDay ? "" : " cursor-pointer"}`}
                     onClick={() => {
                       if (isClosedDay) return;
                       onSlotClick(date);
@@ -343,7 +372,7 @@ export function MonthCalendarView({
                             ) : null}
                           </span>
                           {isClosedDay ? (
-                            <span className="hidden text-[10px] font-medium leading-none text-reservation-waitlist-text sm:inline">
+                            <span className="hidden text-[10px] font-medium leading-none text-reservation-waitlist-text sm:inline print:inline">
                               休業日
                             </span>
                           ) : null}
@@ -431,6 +460,7 @@ export function MonthCalendarView({
             </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>
